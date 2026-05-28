@@ -1,0 +1,21 @@
+AccountID,CustomerName,AccountType,Balance,OpenDate,Branch,Status
+ACC001,James Mitchell,Checking,15420.50,2019-03-15,Downtown,Active
+ACC002,Sarah Johnson,Savings,42300.00,2020-07-22,Midtown,Active
+ACC003,Robert Chen,Checking,3200.75,2021-01-10,Uptown,Active
+ACC004,Emily Davis,Savings,87500.00,2018-06-05,Downtown,Active
+ACC005,Michael Brown,Checking,920.10,2022-03-18,Eastside,Active
+ACC006,Lisa Thompson,Savings,15000.00,2019-11-30,Midtown,Inactive
+ACC007,David Wilson,Checking,56780.25,2017-08-14,Downtown,Active
+ACC008,Amanda Taylor,Savings,3400.00,2023-02-27,Westside,Active
+ACC009,Christopher Lee,Checking,12300.80,2020-05-19,Uptown,Active
+ACC010,Jessica Martinez,Savings,29900.00,2018-12-01,Downtown,Active
+ACC011,Daniel Anderson,Checking,750.00,2022-09-14,Eastside,Active
+ACC012,Mary Jackson,Savings,63200.50,2016-04-22,Midtown,Active
+ACC013,Kevin White,Checking,4100.30,2021-07-08,Westside,Active
+ACC014,Patricia Harris,Savings,11800.00,2019-02-14,Downtown,Active
+ACC015,Steven Martin,Checking,22400.75,2020-10-31,Uptown,Active
+ACC016,Nancy Thompson,Savings,5600.00,2022-01-05,Eastside,Inactive
+ACC017,George Garcia,Checking,18900.20,2018-03-17,Midtown,Active
+ACC018,Karen Robinson,Savings,91200.00,2015-09-28,Downtown,Active
+ACC019,Brian Lewis,Checking,3300.60,2023-04-11,Westside,Active
+ACC020,Sandra Walker,Savings,47100.00,2017-11-22,Uptown,Active

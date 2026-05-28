@@ -1,0 +1,31 @@
+TransactionID,AccountID,LoanID,Amount,TransactionDate,TransactionType,Status,Branch,Description
+TXN001,ACC001,LOAN001,500.00,2024-01-05,Payment,Completed,Downtown,Monthly loan payment
+TXN002,ACC002,LOAN002,1200.00,2024-01-06,Payment,Completed,Midtown,Monthly loan payment
+TXN003,ACC003,LOAN003,350.00,2024-01-07,Payment,Failed,Uptown,Insufficient funds
+TXN004,ACC004,LOAN004,2500.00,2024-01-08,Disbursement,Completed,Downtown,New loan disbursed
+TXN005,ACC005,LOAN005,750.00,2024-01-09,Payment,Completed,Eastside,Monthly loan payment
+TXN006,ACC001,LOAN001,500.00,2024-02-05,Payment,Completed,Downtown,Monthly loan payment
+TXN007,ACC006,LOAN006,900.00,2024-02-06,Payment,Completed,Midtown,Monthly loan payment
+TXN008,ACC007,LOAN007,1800.00,2024-02-07,Disbursement,Completed,Downtown,New loan disbursed
+TXN009,ACC003,LOAN003,350.00,2024-02-08,Payment,Completed,Uptown,Monthly loan payment
+TXN010,ACC008,LOAN008,600.00,2024-02-09,Payment,Completed,Westside,Monthly loan payment
+TXN011,ACC009,LOAN009,1100.00,2024-03-01,Payment,Completed,Uptown,Monthly loan payment
+TXN012,ACC010,LOAN010,3000.00,2024-03-02,Disbursement,Completed,Downtown,Home improvement loan
+TXN013,ACC011,LOAN011,200.00,2024-03-03,Payment,Failed,Eastside,Account closed
+TXN014,ACC012,LOAN012,850.00,2024-03-04,Payment,Completed,Midtown,Monthly loan payment
+TXN015,ACC013,LOAN013,450.00,2024-03-05,Payment,Completed,Westside,Monthly loan payment
+TXN016,ACC001,LOAN001,500.00,2024-03-05,Payment,Completed,Downtown,Monthly loan payment
+TXN017,ACC014,LOAN014,1400.00,2024-03-06,Payment,Completed,Downtown,Monthly loan payment
+TXN018,ACC015,LOAN015,700.00,2024-03-07,Disbursement,Completed,Uptown,Auto loan
+TXN019,ACC016,LOAN016,300.00,2024-03-08,Payment,Failed,Eastside,Insufficient funds
+TXN020,ACC002,LOAN002,1200.00,2024-03-08,Payment,Completed,Midtown,Monthly loan payment
+TXN021,ACC017,LOAN017,2200.00,2024-04-01,Payment,Completed,Midtown,Monthly loan payment
+TXN022,ACC018,LOAN018,5000.00,2024-04-02,Disbursement,Completed,Downtown,Business loan
+TXN023,ACC019,LOAN019,400.00,2024-04-03,Payment,Completed,Westside,Monthly loan payment
+TXN024,ACC020,LOAN020,1600.00,2024-04-04,Payment,Completed,Uptown,Monthly loan payment
+TXN025,ACC003,LOAN003,350.00,2024-04-05,Payment,Failed,Uptown,Insufficient funds
+TXN026,ACC005,LOAN005,750.00,2024-04-06,Payment,Completed,Eastside,Monthly loan payment
+TXN027,ACC007,LOAN007,1800.00,2024-04-07,Payment,Completed,Downtown,Monthly loan payment
+TXN028,ACC009,LOAN009,1100.00,2024-04-08,Payment,Completed,Uptown,Monthly loan payment
+TXN029,ACC011,LOAN011,200.00,2024-04-09,Payment,Completed,Eastside,Monthly loan payment
+TXN030,ACC013,LOAN013,450.00,2024-04-10,Payment,Completed,Westside,Monthly loan payment
