@@ -1,7 +1,11 @@
 # 🎤 Demo Script — Medallion Architecture
 
-**Presenter Time:** ~35 minutes  
+**Presenter Time:** ~35 minutes (Code path) or ~30 minutes (No-code path)
 **Audience:** Business stakeholders, managers
+
+> 🔀 **Two demo paths available:**
+> - **🐍 Code path** — Use PySpark notebooks (Steps 1-3 below)
+> - **🖱️ No-code path** — Use Dataflow Gen2 instead (see [`DATAFLOW_GEN2_GUIDE.md`](./DATAFLOW_GEN2_GUIDE.md) for Steps 1-3, then continue from Step 4 below)
 
 ---
 
@@ -44,7 +48,10 @@
 > *"- **Eventstream**: For real-time systems — every transaction that clears goes directly into Fabric within milliseconds. Think of card swipes at a POS terminal."*
 > *"- **REST API Connector**: Your loan origination system exposes an API. Fabric polls it every hour and pulls new applications into Bronze."*
 > *"- **SFTP / File Drop**: Some legacy banking systems still drop flat files to an SFTP server nightly. Fabric watches that folder and automatically picks them up."*
+> *"- **Dataflow Gen2**: A no-code, visual tool — like Power Query in Excel — for analysts who prefer clicking over coding. We'll use this path as an alternative today."*
 > *"- **Manual Upload** (what we're doing): For demos, testing, or one-off data loads."*
+
+> 💡 **If presenting the no-code path:** *"For this demo, instead of notebooks, I'll show you Dataflow Gen2 — a completely visual, no-code approach. If your team uses Excel and Power Query, they'll feel right at home."*
 
 > *"The key principle of Bronze: **you never change the data**. Whatever comes in, you store it exactly as-is. Bronze is your audit trail — your insurance policy."*
 

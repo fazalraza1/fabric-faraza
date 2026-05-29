@@ -39,23 +39,37 @@ Think of it like a **car wash** for your data:
 | File | Purpose |
 |------|---------|
 | `data/loan_transactions.csv` | 500 loan transaction records |
-| `notebooks/01_bronze_ingest.ipynb` | Load raw data (Bronze layer) |
-| `notebooks/02_silver_clean.ipynb` | Clean and validate data (Silver layer) |
-| `notebooks/03_gold_report.ipynb` | Create business summary (Gold layer) |
+| `notebooks/01_bronze_ingest.ipynb` | 🐍 **Code option** — Load raw data (Bronze layer) |
+| `notebooks/02_silver_clean.ipynb` | 🐍 **Code option** — Clean and validate data (Silver layer) |
+| `notebooks/03_gold_report.ipynb` | 🐍 **Code option** — Create business summary (Gold layer) |
+| `DATAFLOW_GEN2_GUIDE.md` | 🖱️ **No-code option** — Full Dataflow Gen2 step-by-step guide |
 | `DEMO_SCRIPT.md` | Step-by-step presenter guide (includes Semantic Model + Power BI Copilot instructions) |
 
 ---
 
 ## ▶️ How to Run
 
-Run in order: Bronze → Silver → Gold → Semantic Model → Power BI Copilot
+> **Two options — same result!** Choose based on your audience and skill level.
+
+### 🐍 Option A — Code (PySpark Notebooks)
+*Best for: data engineers, technical audiences*
+
+Run notebooks in order: Bronze → Silver → Gold
 
 1. Upload `data/loan_transactions.csv` to your Lakehouse Files section
-2. Open and run `01_bronze_ingest.ipynb`
-3. Open and run `02_silver_clean.ipynb`
-4. Open and run `03_gold_report.ipynb`
+2. Open and run `notebooks/01_bronze_ingest.ipynb`
+3. Open and run `notebooks/02_silver_clean.ipynb`
+4. Open and run `notebooks/03_gold_report.ipynb`
 5. Create Semantic Model from `gold_loan_summary` table (instructions in DEMO_SCRIPT.md)
 6. Open Power BI and use Copilot to generate the report (instructions in DEMO_SCRIPT.md)
+
+### 🖱️ Option B — No-Code (Dataflow Gen2)
+*Best for: business analysts, non-technical audiences*
+
+1. Upload `data/loan_transactions.csv` to your Lakehouse Files section
+2. Follow the full step-by-step guide in 👉 [`DATAFLOW_GEN2_GUIDE.md`](./DATAFLOW_GEN2_GUIDE.md)
+3. Create Semantic Model from `gold_loan_summary` table (instructions in DEMO_SCRIPT.md)
+4. Open Power BI and use Copilot to generate the report (instructions in DEMO_SCRIPT.md)
 
 ---
 
@@ -64,6 +78,8 @@ Run in order: Bronze → Silver → Gold → Semantic Model → Power BI Copilot
 - **Why 3 layers?** So you always have the original data (Bronze) as a backup
 - **Silver** is what analysts use for most day-to-day work
 - **Gold** is what executives and dashboards consume
+- **Two paths, same result** — notebooks for engineers, Dataflow Gen2 for analysts — both produce identical Delta Tables
+- **Dataflow Gen2** feels just like Excel Power Query — if your team knows Excel, they can do this
 - **Semantic Model** is the bridge between raw data and business-friendly Power BI reports
 - **Power BI Copilot** lets anyone build a professional report using plain English — no BI skills needed
 - This pattern scales to **billions of transactions** without any extra work
