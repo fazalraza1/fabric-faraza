@@ -1,4 +1,4 @@
-# 🎤 Demo Script — Demo 03: Real-Time Fraud Detection
+# 🎤 Demo Script — AI-Powered Fraud Defense
 
 **Presenter Time:** ~35 minutes  
 **Audience:** Business stakeholders + technical observers

@@ -1,6 +1,6 @@
-# 🎤 Demo Script — Demo 02: Medallion Architecture with Loan Transactions
+# 🎤 Demo Script — Medallion Architecture
 
-**Presenter Time:** ~25 minutes  
+**Presenter Time:** ~35 minutes  
 **Audience:** Business stakeholders, managers
 
 ---
@@ -111,13 +111,84 @@
 
 ---
 
+## 📐 STEP 4 — Create a Semantic Model (5 min)
+
+> *"Now here's where things get really interesting. We have clean, summarized data in our Gold table. But raw tables aren't quite ready for business users to explore in Power BI — they need business-friendly names, relationships, and measures. That's what a Semantic Model provides."*
+
+> *"A **Semantic Model** is a business-friendly layer on top of your data. Think of it as a translation layer — it takes technical table and column names and turns them into language that business users understand. It also pre-defines calculations like 'Total Revenue' or 'Average Loan Amount' so every report in the organization uses the exact same numbers."*
+
+> *"In the past, building a Semantic Model could take a data engineer days. In Fabric, it's built into the Lakehouse — you're minutes away."*
+
+**Action:** In the Lakehouse, click **"New semantic model"** (top toolbar)
+
+> *"Notice this button right here — 'New semantic model'. Fabric knows about our Gold table and can automatically create a Semantic Model from it."*
+
+**Action:** In the dialog:
+1. Name it: `LoanAnalyticsModel`
+2. Select table: ✅ `gold_loan_summary`
+3. Click **Confirm**
+
+> *"Fabric is now creating the Semantic Model. It's automatically detecting column types, suggesting relationships, and making the data Power BI-ready."*
+
+**Action:** Once opened in the Semantic Model editor:
+- Click on the `TotalAmount` column → rename it to `Total Loan Volume ($)`
+- Click on the `TransactionCount` column → rename it to `Number of Transactions`
+- Click **New measure** → enter: `Avg Transaction = AVERAGE(gold_loan_summary[AvgAmount])`
+
+> *"See how easy that was? We just gave our columns business-friendly names and added a custom calculation. Every Power BI report connected to this model will now use these consistent definitions — no more 'which number is right?' conversations between teams."*
+
+> *"And this Semantic Model is live. The moment new data arrives in the Gold table, the Semantic Model reflects it — automatically. No refresh schedule to configure, no manual updates."*
+
+---
+
+## 📊 STEP 5 — Generate Power BI Report with Copilot (5 min)
+
+> *"Now the moment that will surprise most people in this room. We're going to ask an AI — Copilot in Power BI — to build a complete, professional report for us. Using plain English. No Power BI skills required."*
+
+> *"Microsoft Copilot is built into Power BI and understands your Semantic Model. You describe what you want in natural language, and Copilot builds the visuals."*
+
+**Action:** From the Semantic Model, click **"Create report"** → **"Auto-create report"**
+
+> *"Option 1: Auto-create. Fabric's AI looks at your data and automatically decides the best visuals. Let's see what it suggests..."*
+
+**[Show the auto-generated report]**
+
+> *"Look at that — a complete report in under 10 seconds. Branch performance bar chart, monthly trend line, transaction type breakdown. This would have taken a BI developer half a day."*
+
+**Action:** Click the **Copilot** button (sparkle icon ✨) in the report toolbar
+
+> *"Now let's try Copilot directly. I'm going to ask it to add something specific."*
+
+**Action:** In the Copilot panel, type:
+> `"Add a page showing monthly loan payment trends by branch with a line chart"`
+
+**[Show Copilot generating the visual]**
+
+> *"Watch — Copilot reads the request, understands the data model, picks the right fields, chooses the right visual type, and places it on the report. No clicking through menus. No dragging fields. Just plain English."*
+
+**Action:** In the Copilot panel, type:
+> `"Add a KPI card showing total loan volume this year"`
+
+> *"I can keep refining the report conversationally. Add a filter here. Change the color theme. Add a summary text box that explains the key insights."*
+
+**Action:** In the Copilot panel, type:
+> `"Summarize the key insights from this report"`
+
+> *"Copilot can even write the narrative — the executive summary paragraph that explains what the data shows. That's the paragraph your CFO would normally ask an analyst to write."*
+
+**[Point to the finished report]**
+
+> *"In under 5 minutes, we went from a Gold Delta Table to a fully interactive, AI-generated Power BI report. With Copilot, your business users don't need to wait for IT or BI developers. They can explore their data themselves — in their own words."*
+
+---
+
 ## ✅ CLOSING (2 min)
 
-> *"What you saw today is how world-class banks and financial institutions manage their data. Bronze protects your raw data forever. Silver makes it trustworthy. Gold makes it instantly actionable."*
+> *"What you saw today is how world-class banks and financial institutions manage their data. Bronze protects your raw data forever. Silver makes it trustworthy. Gold makes it instantly actionable. The Semantic Model makes it business-friendly. And Copilot makes it accessible to everyone."*
 
-> *"Microsoft Fabric makes this pattern — which used to take 6-12 months and a team of 5 engineers to build — available in days."*
+> *"Microsoft Fabric makes this entire pattern — which used to take 6-12 months and a team of 5 engineers — available in days. And with Copilot in Power BI, business users no longer need to wait for BI developers to build reports."*
 
-> *"The Medallion Architecture isn't just a technical pattern. It's a **data governance framework**. It gives you auditability at Bronze, data quality at Silver, and business agility at Gold."*
+> *"The Medallion Architecture isn't just a technical pattern. It's a **data democratization strategy**. It gives you auditability at Bronze, data quality at Silver, business agility at Gold, governance at the Semantic Model layer, and self-service at the Power BI Copilot layer."*
 
 > *"In our next demo, I'll show you how we add AI on top of this architecture to automatically detect fraudulent transactions in real time."*
 
@@ -138,7 +209,19 @@ A: Delta Tables support schema evolution — you can add new columns without bre
 A: Yes — and with Fabric's Direct Lake mode, Power BI reads directly from Delta Tables without importing data. Reports are always live and there's no data duplication.
 
 **Q: What about data lineage — can we track where data came from?**  
-A: Fabric has built-in data lineage views that show exactly how data flows from source through Bronze, Silver, Gold to reports. This is critical for regulatory compliance.
+A: Fabric has built-in data lineage views that show exactly how data flows from source through Bronze, Silver, Gold, Semantic Model to reports. This is critical for regulatory compliance.
 
 **Q: How does this help with regulatory reporting like Basel III or stress testing?**  
 A: Bronze gives you a complete, immutable audit trail. Silver gives you validated, consistent data. Gold gives you pre-built regulatory report tables. All auditable, all traceable.
+
+**Q: What is a Semantic Model exactly — is it the same as a dataset?**  
+A: Yes — in older Power BI terminology it was called a "dataset". Microsoft renamed it to Semantic Model to better reflect what it does: it models the business semantics (meaning) of your data. It defines measures, relationships, hierarchies, and friendly names that all reports share consistently.
+
+**Q: Does everyone need Power BI skills to use Copilot?**  
+A: No — that's the point. Copilot lets business users describe what they want in plain English. "Show me loan payments by branch for the last 3 months" — Copilot builds it. No dragging, no dropping, no DAX knowledge required.
+
+**Q: Can Copilot connect to our existing Power BI reports?**  
+A: Yes — Copilot works inside existing Power BI reports and can also create new ones from any Semantic Model. It can also add visuals to existing report pages.
+
+**Q: What if Copilot builds the wrong chart?**  
+A: You simply tell it to change it — "change this to a bar chart" or "add a date filter". It's a conversation, not a one-shot command. And you can always manually edit any visual Copilot creates.

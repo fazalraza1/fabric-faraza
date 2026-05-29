@@ -9,9 +9,9 @@ Demos are designed to be easy to follow — even for non-technical audiences.
 
 | Demo | Complexity | What It Shows |
 |------|-----------|---------------|
-| [01 - Simple](./demos/01-simple/README.md) | ⭐ Beginner | Load bank account data into Fabric Lakehouse & query it |
-| [02 - Medium](./demos/02-medium/README.md) | ⭐⭐ Intermediate | Bronze → Silver → Gold data pipeline with loan transactions |
-| [03 - Complex](./demos/03-complex/README.md) | ⭐⭐⭐ Advanced | Real-time fraud detection end-to-end |
+| [01 - Lakehouse Fundamentals](./demos/01-lakehouse-fundamentals/README.md) | ⭐ Beginner | Load bank account data into Fabric Lakehouse & query it |
+| [02 - Medallion Architecture](./demos/02-medallion-architecture/README.md) | ⭐⭐ Intermediate | Bronze → Silver → Gold pipeline, Semantic Model & Power BI Copilot report |
+| [03 - AI-Powered Fraud Defense](./demos/03-ai-powered-fraud-defense/README.md) | ⭐⭐⭐ Advanced | Real-time fraud detection with ML end-to-end |
 
 ---
 
@@ -34,9 +34,9 @@ Read [PREREQUISITES.md](./PREREQUISITES.md) to set up your Fabric environment.
 ```
 fabric-faraza/
 ├── demos/
-│   ├── 01-simple/       ⭐  Load data → Lakehouse → Query
-│   ├── 02-medium/       ⭐⭐  Medallion architecture (Bronze/Silver/Gold)
-│   └── 03-complex/      ⭐⭐⭐ Fraud detection with ML
+│   ├── 01-lakehouse-fundamentals/   ⭐  Load data → Lakehouse → Query
+│   ├── 02-medallion-architecture/   ⭐⭐  Bronze/Silver/Gold → Semantic Model → Power BI
+│   └── 03-ai-powered-fraud-defense/ ⭐⭐⭐ Fraud detection with ML
 └── shared/
     ├── sample-data/     Reusable finance datasets
     └── setup-scripts/   Fabric workspace helpers

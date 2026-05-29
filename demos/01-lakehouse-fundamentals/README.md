@@ -1,4 +1,4 @@
-# ⭐ Demo 01 — Simple: Load Bank Data into Fabric Lakehouse
+# ⭐ Demo 01 — Lakehouse Fundamentals
 
 **Time to run:** ~10 minutes  
 **Audience:** Anyone — no technical background needed  

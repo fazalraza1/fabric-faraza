@@ -1,4 +1,4 @@
-# ⭐⭐⭐ Demo 03 — Complex: Real-Time Bank Loan Fraud Detection
+# ⭐⭐⭐ Demo 03 — AI-Powered Fraud Defense
 
 **Time to run:** ~30 minutes  
 **Audience:** Business stakeholders + technical observers  

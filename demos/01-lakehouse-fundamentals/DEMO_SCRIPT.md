@@ -1,4 +1,4 @@
-# 🎤 Demo Script — Demo 01: Load Bank Data into Fabric Lakehouse
+# 🎤 Demo Script — Lakehouse Fundamentals
 
 **Presenter Time:** ~15 minutes  
 **Audience:** Business stakeholders, non-technical
