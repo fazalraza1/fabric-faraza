@@ -4,6 +4,9 @@
 **Audience:** Business stakeholders + technical observers  
 **What you'll learn:** How AI detects fraud automatically in real time using Microsoft Fabric
 
+> 🔧 **First time?** Make sure you have the prerequisites set up before starting.  
+> 👉 [View Prerequisites & Setup Guide](../../PREREQUISITES.md)
+
 ---
 
 ## 🎯 What This Demo Shows

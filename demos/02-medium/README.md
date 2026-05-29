@@ -4,6 +4,9 @@
 **Audience:** Business stakeholders, managers  
 **What you'll learn:** How Fabric organizes messy raw data into clean, trusted insights
 
+> 🔧 **First time?** Make sure you have the prerequisites set up before starting.  
+> 👉 [View Prerequisites & Setup Guide](../../PREREQUISITES.md)
+
 ---
 
 ## 🎯 What This Demo Shows

@@ -4,6 +4,9 @@
 **Audience:** Anyone — no technical background needed  
 **What you'll learn:** How Microsoft Fabric stores and queries data like a database
 
+> 🔧 **First time?** Make sure you have the prerequisites set up before starting.  
+> 👉 [View Prerequisites & Setup Guide](../../PREREQUISITES.md)
+
 ---
 
 ## 🎯 What This Demo Shows
