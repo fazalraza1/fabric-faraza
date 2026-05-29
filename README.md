@@ -9,9 +9,9 @@ Demos are designed to be easy to follow — even for non-technical audiences.
 
 | Demo | Complexity | What It Shows |
 |------|-----------|---------------|
-| [01 - Lakehouse Fundamentals](./demos/01-lakehouse-fundamentals/README.md) | ⭐ Beginner | Load bank account data into Fabric Lakehouse & query it |
-| [02 - Medallion Architecture](./demos/02-medallion-architecture/README.md) | ⭐⭐ Intermediate | Bronze → Silver → Gold pipeline, Semantic Model & Power BI Copilot report |
-| [03 - AI-Powered Fraud Defense](./demos/03-ai-powered-fraud-defense/README.md) | ⭐⭐⭐ Advanced | Real-time fraud detection with ML end-to-end |
+| [01 - Lakehouse Fundamentals](./fabric-demos/01-lakehouse-fundamentals/README.md) | ⭐ Beginner | Load bank account data into Fabric Lakehouse & query it |
+| [02 - Medallion Architecture](./fabric-demos/02-medallion-architecture/README.md) | ⭐⭐ Intermediate | Bronze → Silver → Gold pipeline, Semantic Model & Power BI Copilot report |
+| [03 - AI-Powered Fraud Defense](./fabric-demos/03-ai-powered-fraud-defense/README.md) | ⭐⭐⭐ Advanced | Real-time fraud detection with ML end-to-end |
 
 ---
 
