@@ -12,6 +12,7 @@ Demos are designed to be easy to follow — even for non-technical audiences.
 | [01 - Lakehouse Fundamentals](./fabric-demos/01-lakehouse-fundamentals/README.md) | ⭐ Beginner | Load bank account data into Fabric Lakehouse & query it |
 | [02 - Medallion Architecture](./fabric-demos/02-medallion-architecture/README.md) | ⭐⭐ Intermediate | Bronze → Silver → Gold pipeline, Semantic Model & Power BI Copilot report |
 | [03 - AI-Powered Fraud Defense](./fabric-demos/03-ai-powered-fraud-defense/README.md) | ⭐⭐⭐ Advanced | Real-time fraud detection with ML end-to-end |
+| [04 - Credit Risk Scoring](./fabric-demos/04-credit-risk-scoring/README.md) | ⭐⭐⭐⭐ Expert | Feature Store, LightGBM, MLflow, SHAP explainability, PSI drift monitoring |
 
 ---
 
@@ -33,10 +34,11 @@ Read [PREREQUISITES.md](./PREREQUISITES.md) to set up your Fabric environment.
 
 ```
 fabric-faraza/
-├── demos/
-│   ├── 01-lakehouse-fundamentals/   ⭐  Load data → Lakehouse → Query
-│   ├── 02-medallion-architecture/   ⭐⭐  Bronze/Silver/Gold → Semantic Model → Power BI
-│   └── 03-ai-powered-fraud-defense/ ⭐⭐⭐ Fraud detection with ML
+├── fabric-demos/
+│   ├── 01-lakehouse-fundamentals/   ⭐      Load data → Lakehouse → Query
+│   ├── 02-medallion-architecture/   ⭐⭐     Bronze/Silver/Gold → Semantic Model → Power BI
+│   ├── 03-ai-powered-fraud-defense/ ⭐⭐⭐   Fraud detection with ML
+│   └── 04-credit-risk-scoring/      ⭐⭐⭐⭐  Feature Store + LightGBM + MLflow + SHAP
 └── shared/
     ├── sample-data/     Reusable finance datasets
     └── setup-scripts/   Fabric workspace helpers
@@ -44,11 +46,12 @@ fabric-faraza/
 
 ---
 
-## 🔮 Coming Soon (Phase 2)
+## 🔮 Coming Soon (Phase 3)
 
-- Advanced Data Science demos for experienced practitioners
 - Eventstream real-time ingestion demos
 - Power BI Direct Lake demos
+- Champion/Challenger model A/B testing
+- Fairness & bias testing with Fairlearn
 
 ---
 
