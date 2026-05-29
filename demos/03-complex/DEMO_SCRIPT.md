@@ -19,7 +19,7 @@
 
 **Action:** Upload `fraud_transactions.csv` → Open `01_ingest.ipynb` → Run all cells
 
-> *"Here are 30 transactions from our bank. Some are normal — groceries, restaurants, gas stations. But some are fraudulent. Can you spot them?"*
+> *"Here are 500 transactions from our bank. Some are normal — groceries, restaurants, gas stations. But some are fraudulent. Can you spot them?"*
 
 **[Pause and let audience look]**
 

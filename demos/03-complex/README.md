@@ -52,7 +52,7 @@ Raw Transactions (CSV/Stream)
 
 | File | Purpose |
 |------|---------|
-| `data/fraud_transactions.csv` | 30 transactions (some fraudulent) |
+| `data/fraud_transactions.csv` | 500 transactions (~20% fraudulent) |
 | `notebooks/01_ingest.ipynb` | Load raw transactions |
 | `notebooks/02_feature_engineering.ipynb` | Build fraud signals |
 | `notebooks/03_model_training.ipynb` | Train fraud detection model |

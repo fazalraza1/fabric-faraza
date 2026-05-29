@@ -30,7 +30,7 @@ then we ask questions about the data using simple SQL, just like a search engine
 
 | File | Purpose |
 |------|---------|
-| `data/sample_accounts.csv` | 20 fictional bank customer accounts |
+| `data/sample_accounts.csv` | 500 fictional bank customer accounts |
 | `notebooks/01_load_data.ipynb` | Notebook to load and query the data |
 | `DEMO_SCRIPT.md` | Step-by-step guide for presenters |
 

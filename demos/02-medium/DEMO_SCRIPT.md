@@ -23,7 +23,7 @@
 
 **Action:** Upload `loan_transactions.csv` to Lakehouse → Open `01_bronze_ingest.ipynb` → Run all cells
 
-> *"Here we're loading 30 loan transactions exactly as they came in — no changes, no filtering. You can see some transactions failed, some have issues. That's fine at this stage — we want to preserve the original data."*
+> *"Here we're loading 500 loan transactions exactly as they came in — no changes, no filtering. You can see some transactions failed, some have issues. That's fine at this stage — we want to preserve the original data."*
 
 > *"Bronze is like your original document. You never throw away the original."*
 

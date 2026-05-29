@@ -36,7 +36,7 @@ Think of it like a **car wash** for your data:
 
 | File | Purpose |
 |------|---------|
-| `data/loan_transactions.csv` | 30 loan transaction records |
+| `data/loan_transactions.csv` | 500 loan transaction records |
 | `notebooks/01_bronze_ingest.ipynb` | Load raw data (Bronze layer) |
 | `notebooks/02_silver_clean.ipynb` | Clean and validate data (Silver layer) |
 | `notebooks/03_gold_report.ipynb` | Create business summary (Gold layer) |
