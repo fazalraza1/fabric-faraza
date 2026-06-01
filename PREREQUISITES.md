@@ -225,12 +225,66 @@ A Lakehouse is the data storage layer used by all demos. It combines a data lake
 
 ---
 
+## SECTION 5 — Import Notebooks into Fabric
+
+Each demo folder contains `.ipynb` notebook files. You need to import them into your Fabric workspace before running the demo.
+
+> 📖 **Docs:** [Import a notebook in Fabric](https://learn.microsoft.com/en-us/fabric/data-engineering/how-to-use-notebook#import-existing-notebooks)
+
+### Import a Single Notebook
+
+1. Open your **FabricBankingDemos** workspace in 👉 [app.fabric.microsoft.com](https://app.fabric.microsoft.com)
+2. Click **Import** in the top toolbar of the workspace
+3. Select **Notebook**
+4. Select **From this computer**
+5. Browse to the `.ipynb` file (e.g. `fabric-demos/01-lakehouse-fundamentals/notebooks/01_load_data.ipynb`)
+6. Click **Open** — the notebook appears in your workspace
+
+### Import All Notebooks at Once (Recommended)
+
+You can select **multiple `.ipynb` files** in step 5 to import them all in one go:
+
+1. In your workspace, click **Import → Notebook → From this computer**
+2. Navigate to the demo's `notebooks/` folder
+3. Press `Ctrl+A` (or manually select all `.ipynb` files)
+4. Click **Open** — all notebooks import simultaneously
+
+> 💡 **Tip:** Import all notebooks for a demo before starting — you won't need to pause mid-demo.
+
+### Attach the Lakehouse to Each Notebook
+
+After importing, each notebook must be connected to `BankingLakehouse` or the `spark.table()` calls will fail:
+
+1. Open the imported notebook in Fabric
+2. In the **left panel**, click **Add Lakehouse**
+3. Select **Existing Lakehouse**
+4. Choose `BankingLakehouse` → click **Add**
+5. Confirm the Lakehouse appears in the left panel with **Files** and **Tables** visible
+
+> ⚠️ **Do this for every notebook** — the Lakehouse attachment is per-notebook, not per-workspace.
+
+### Upload Data Files to the Lakehouse
+
+Some notebooks read CSV files from `Files/` in the Lakehouse. Upload them once per demo:
+
+1. In your workspace, open **BankingLakehouse**
+2. In the **Files** section (left panel), click the **...** menu → **Upload** → **Upload files**
+3. Browse to the demo's `data/` folder and select the `.csv` file(s)
+4. Click **Upload**
+
+> ✅ Once uploaded, the file is accessible in notebooks as `Files/filename.csv`
+
+---
+
 ## 📋 Final Checklist Before Running Any Demo
 
 - [ ] ✅ Azure Subscription exists (Owner or Contributor role confirmed)
 - [ ] ✅ Microsoft Fabric Capacity is active (trial or purchased)
 - [ ] ✅ Fabric Workspace `FabricBankingDemos` created and linked to capacity
 - [ ] ✅ Lakehouse `BankingLakehouse` created inside the workspace
+- [ ] ✅ Notebooks imported: **Workspace → Import → Notebook → From this computer**
+- [ ] ✅ Lakehouse attached to each notebook (left panel → Add Lakehouse → BankingLakehouse)
+- [ ] ✅ CSV data files uploaded to Lakehouse **Files** section
 - [ ] ✅ Using Microsoft Edge or Google Chrome (latest version)
 
 ---
@@ -259,6 +313,7 @@ A Lakehouse is the data storage layer used by all demos. It combines a data lake
 | Azure RBAC roles reference | [Azure built-in roles](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles) |
 | Assign Azure roles (portal) | [Assign Azure RBAC roles](https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal) |
 | Create a Lakehouse | [Create a Lakehouse](https://learn.microsoft.com/en-us/fabric/data-engineering/create-lakehouse) |
+| Import notebooks into Fabric | [Import existing notebooks](https://learn.microsoft.com/en-us/fabric/data-engineering/how-to-use-notebook#import-existing-notebooks) |
 | Fabric pricing calculator | [Fabric pricing](https://azure.microsoft.com/en-us/pricing/details/microsoft-fabric/) |
 | Fabric community forum | [community.fabric.microsoft.com](https://community.fabric.microsoft.com) |
 | Azure free account | [azure.microsoft.com/free](https://azure.microsoft.com/free) |
