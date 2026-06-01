@@ -318,6 +318,8 @@ Each demo uses sample CSV data files stored in the `data/` folder of this repo. 
 | **05 — Medallion: Star Schema** | `products.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 10 |
 | **05 — Medallion: Star Schema** | `transactions.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 2,000 |
 | **05 — Medallion: Star Schema** | `loans.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 500 |
+| **06 — Advanced Data Engineering** | `incremental_transactions.csv` | `fabric-demos/06-advanced-data-engineering/data/` | 600 |
+| **06 — Advanced Data Engineering** | `dirty_transactions.csv` | `fabric-demos/06-advanced-data-engineering/data/` | 16 |
 
 ### Step 1 — Download CSV Files from GitHub
 

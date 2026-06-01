@@ -72,6 +72,13 @@ DEMOS = [
         "notebooks": ["01_bronze_ingest.ipynb", "02_silver_dimensions.ipynb",
                       "03_gold_star_schema.ipynb", "04_gold_aggregations.ipynb"],
     },
+    {
+        "name":      "06-advanced-data-engineering",
+        "csv_files": ["incremental_transactions.csv", "dirty_transactions.csv"],
+        "notebooks": ["01_incremental_load.ipynb", "02_upsert_merge.ipynb",
+                      "03_data_quality.ipynb", "04_delta_optimization.ipynb",
+                      "05_time_travel.ipynb", "06_pipeline_orchestration.ipynb"],
+    },
 ]
 
 
