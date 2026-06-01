@@ -276,6 +276,65 @@ Some notebooks read CSV files from `Files/` in the Lakehouse. Upload them once p
 
 ---
 
+## SECTION 6 — Upload CSV Data Files to the Lakehouse
+
+Each demo uses sample CSV data files stored in the `data/` folder of this repo. These must be uploaded to the Lakehouse **Files** section before running any notebook.
+
+> 📖 **Docs:** [Upload files to a Fabric Lakehouse](https://learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-files#upload-files-or-folders)
+
+### Which CSV Files Are Needed?
+
+| Demo | CSV File | Location in Repo | Rows |
+|------|----------|-----------------|------|
+| **01 — Lakehouse Fundamentals** | `sample_accounts.csv` | `fabric-demos/01-lakehouse-fundamentals/data/` | 500 |
+| **02 — Medallion Architecture** | `loan_transactions.csv` | `fabric-demos/02-medallion-architecture/data/` | 500 |
+| **03 — AI-Powered Fraud Defense** | `fraud_transactions.csv` | `fabric-demos/03-ai-powered-fraud-defense/data/` | 500 |
+| **04 — Credit Risk Scoring** | `credit_risk_features.csv` | `fabric-demos/04-credit-risk-scoring/data/` | 500 |
+
+### Step 1 — Download CSV Files from GitHub
+
+**Option A: Download individual files**
+1. Go to 👉 [github.com/fazalraza1/fabric-faraza](https://github.com/fazalraza1/fabric-faraza)
+2. Navigate to the demo's `data/` folder (e.g. `fabric-demos/01-lakehouse-fundamentals/data/`)
+3. Click the CSV file name
+4. Click the **Download raw file** button (⬇️ icon, top right)
+5. Save to your local machine
+
+**Option B: Download the entire repo as a ZIP (Recommended — get all files at once)**
+1. Go to 👉 [github.com/fazalraza1/fabric-faraza](https://github.com/fazalraza1/fabric-faraza)
+2. Click the green **Code** button → **Download ZIP**
+3. Extract the ZIP to a folder on your machine (e.g. `C:\FabricDemos\`)
+4. All CSV files are now available in their respective `data/` folders
+
+### Step 2 — Upload CSV Files to the Lakehouse
+
+1. Open your **FabricBankingDemos** workspace
+2. Click **BankingLakehouse** to open it
+3. In the **Explorer** panel on the left, find the **Files** section
+4. Click the **...** (ellipsis) next to **Files** → **Upload** → **Upload files**
+5. Browse to the CSV file on your machine and select it
+6. Click **Upload**
+7. Confirm the file appears under **Files** in the left panel
+
+> 💡 **Tip:** You can upload multiple CSV files at once by selecting them all in step 6 (`Ctrl+click` each file).
+
+> ✅ Once uploaded, notebooks can read the file using:
+> ```python
+> df = spark.read.option('header','true').csv('Files/sample_accounts.csv')
+> ```
+
+### Step 3 — Verify the Upload
+
+After uploading, verify the file is accessible:
+
+1. In the Lakehouse, click the **...** next to the CSV file under **Files**
+2. Select **Preview** — you should see the first few rows of data
+3. If Preview shows data → ✅ ready to run the notebook
+
+> ⚠️ **Common issue:** If a notebook says `FileNotFoundError` or `Path does not exist`, the CSV was not uploaded or the filename doesn't match. Check the exact filename (case-sensitive).
+
+---
+
 ## 📋 Final Checklist Before Running Any Demo
 
 - [ ] ✅ Azure Subscription exists (Owner or Contributor role confirmed)
@@ -293,9 +352,9 @@ Some notebooks read CSV files from `Files/` in the Lakehouse. Upload them once p
 
 | Scenario | Time Needed |
 |----------|------------|
-| You have everything already | 5 min (just create Lakehouse) |
-| Starting Fabric free trial | 15 min |
-| Creating Azure subscription + Fabric capacity | 30-45 min |
+| You have everything already | 10 min (import notebooks + upload CSVs) |
+| Starting Fabric free trial | 20 min |
+| Creating Azure subscription + Fabric capacity | 45-60 min |
 
 ---
 
