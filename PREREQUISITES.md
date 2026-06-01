@@ -11,6 +11,28 @@ This guide walks you through checking if you already have them — and how to cr
 
 ---
 
+## ⚡ Want to Skip the Manual Steps?
+
+Once you have your Workspace and Lakehouse created (Sections 1-4), you can **automate** uploading CSV files and importing notebooks with one command:
+
+```powershell
+# Step 1: Install Python packages (one time only)
+pip install azure-identity azure-storage-file-datalake requests
+
+# Step 2: Log in to Azure
+az login
+
+# Step 3: Run the setup script
+cd shared\setup-scripts
+python setup_fabric_demo.py
+```
+
+The script uploads all CSVs and imports all notebooks for whichever demos you choose.
+
+> 📖 **Full instructions:** [shared/setup-scripts/SETUP_SCRIPT_README.md](./shared/setup-scripts/SETUP_SCRIPT_README.md)
+
+---
+
 ## 🔍 Quick Check — Do You Already Have These?
 
 ### Do you have an Azure Subscription?
