@@ -312,6 +312,12 @@ Each demo uses sample CSV data files stored in the `data/` folder of this repo. 
 | **02 — Medallion Architecture** | `loan_transactions.csv` | `fabric-demos/02-medallion-architecture/data/` | 500 |
 | **03 — AI-Powered Fraud Defense** | `fraud_transactions.csv` | `fabric-demos/03-ai-powered-fraud-defense/data/` | 500 |
 | **04 — Credit Risk Scoring** | `credit_risk_features.csv` | `fabric-demos/04-credit-risk-scoring/data/` | 500 |
+| **05 — Medallion: Star Schema** | `customers.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 500 |
+| **05 — Medallion: Star Schema** | `accounts.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 500 |
+| **05 — Medallion: Star Schema** | `branches.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 10 |
+| **05 — Medallion: Star Schema** | `products.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 10 |
+| **05 — Medallion: Star Schema** | `transactions.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 2,000 |
+| **05 — Medallion: Star Schema** | `loans.csv` | `fabric-demos/05-medallion-architecture-complex/data/` | 500 |
 
 ### Step 1 — Download CSV Files from GitHub
 

@@ -65,6 +65,13 @@ DEMOS = [
                       "03_model_training_lightgbm.ipynb", "04_model_comparison.ipynb",
                       "05_model_deployment.ipynb", "06_model_monitoring.ipynb"],
     },
+    {
+        "name":      "05-medallion-architecture-complex",
+        "csv_files": ["customers.csv", "accounts.csv", "branches.csv",
+                      "products.csv", "transactions.csv", "loans.csv"],
+        "notebooks": ["01_bronze_ingest.ipynb", "02_silver_dimensions.ipynb",
+                      "03_gold_star_schema.ipynb", "04_gold_aggregations.ipynb"],
+    },
 ]
 
 
@@ -191,6 +198,7 @@ def select_demos():
     print("  [2] 02 — Medallion Architecture")
     print("  [3] 03 — AI-Powered Fraud Defense")
     print("  [4] 04 — Credit Risk Scoring")
+    print("  [5] 05 — Medallion Architecture: Star Schema")
     print("  [A] All demos")
     choice = input("\nEnter choice (e.g. 1, 2, A): ").strip().upper()
 
