@@ -1,4 +1,4 @@
-# ⭐⭐⭐ Demo 03 — AI-Powered Fraud Defense
+# 🔍 Demo 03 — Transaction Fraud Detection
 
 **Time to run:** ~30 minutes  
 **Audience:** Business stakeholders + technical observers  

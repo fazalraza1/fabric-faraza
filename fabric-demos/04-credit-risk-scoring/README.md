@@ -1,4 +1,4 @@
-# 🧠 Demo 04 — Credit Risk Scoring
+# 🧠 Demo 04 — Credit Risk Modeling & Model Governance
 
 **Phase:** 2 — Advanced Data Science  
 **Time to run:** ~45 minutes  

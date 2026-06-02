@@ -1,4 +1,4 @@
-# 🎯 Demo Script — Credit Risk Scoring with Advanced ML
+# 🎯 Demo Script — Credit Risk Modeling & Model Governance
 ## Phase 2 | Audience: Experienced Practitioners (Data Scientists, ML Engineers, Risk Quants)
 
 ---
