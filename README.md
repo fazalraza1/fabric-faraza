@@ -1,6 +1,6 @@
-# 🏦 Microsoft Fabric Demos — Finance & Banking
+# Microsoft Fabric Demos
 
-Welcome! This repository contains hands-on Microsoft Fabric demos using **Finance & Banking** data.
+Welcome! This repository contains hands-on Microsoft Fabric demos.
 Demos are designed to be easy to follow — even for non-technical audiences.
 
 ---
@@ -50,7 +50,7 @@ fabric-faraza/
 
 ---
 
-## 🔮 Coming Soon (Phase 3)
+## 🔮 Coming Soon (Phase 2)
 
 - Eventstream real-time ingestion demos
 - Power BI Direct Lake demos
