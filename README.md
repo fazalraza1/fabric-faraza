@@ -16,6 +16,7 @@ Demos are designed to be easy to follow — even for non-technical audiences.
 | [05 - Medallion Architecture: Star Schema](./fabric-demos/05-medallion-architecture-complex/README.md) | ⭐⭐⭐⭐ Expert | 6-table star schema, fact/dim tables, complex JOINs, Gold KPI aggregations |
 | [06 - Advanced Data Engineering](./fabric-demos/06-advanced-data-engineering/README.md) | ⭐⭐⭐⭐⭐ Expert | Incremental load, MERGE/upsert, data quality framework, Delta optimization, time travel, pipeline orchestration |
 | [07 - Fabric + Azure Databricks: Better Together](./fabric-demos/07-fabric-databricks-better-together/README.md) | ⭐⭐⭐⭐⭐ Expert | One-click Bicep deploy, Delta Sharing / OneLake zero-copy, unified ML across both platforms |
+| [09 - Fabric IQ Retail Ontology](./fabric-demos/09-fabric-iq-retail-ontology/README.md) | ⭐⭐⭐⭐⭐ Expert | Retail ontology package, Fabric IQ graph, Lakehouse + Eventhouse bindings, Data Agent, Operations Agent |
 
 ---
 
@@ -44,7 +45,8 @@ fabric-faraza/
 │   ├── 04-credit-risk-scoring/      ⭐⭐⭐⭐  Credit Risk Modeling & Model Governance
 │   ├── 05-medallion-architecture-complex/ ⭐⭐⭐⭐  Star schema + fact/dim tables + KPI Gold layer
 │   ├── 06-advanced-data-engineering/      ⭐⭐⭐⭐⭐ Incremental load + MERGE + quality + time travel + orchestration
-│   └── 07-fabric-databricks-better-together/ ⭐⭐⭐⭐⭐ Bicep one-click deploy + Delta Sharing + unified ML
+│   ├── 07-fabric-databricks-better-together/ ⭐⭐⭐⭐⭐ Bicep one-click deploy + Delta Sharing + unified ML
+│   └── 09-fabric-iq-retail-ontology/ ⭐⭐⭐⭐⭐ Retail ontology + Fabric IQ graph + agents
 └── shared/
     ├── sample-data/     Reusable finance datasets
     └── setup-scripts/   Fabric workspace helpers
