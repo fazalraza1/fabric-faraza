@@ -111,7 +111,7 @@ Before you start, make sure you have:
 ## What's in this folder
 
 ```
-09-fabric-iq-retail-ontology/
+08-fabric-iq-retail-ontology/
 ├── README.md                              ← you are here
 ├── TALKING_POINTS.md                      ← presenter narrative + RDF/OWL positioning
 ├── Fabric IQ Lab.docx                     ← original lab handout (Word)

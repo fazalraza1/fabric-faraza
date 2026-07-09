@@ -12,8 +12,8 @@ The two binary artifacts required to run this demo are included in this folder:
 Use these exact files from this folder:
 
 ```
-09-fabric-iq-retail-ontology/Ontology/fabriciq_ontology_accelerator-0.1.0-py3-none-any.whl
-09-fabric-iq-retail-ontology/Ontology/retail_ontology_package.iq
+08-fabric-iq-retail-ontology/Ontology/fabriciq_ontology_accelerator-0.1.0-py3-none-any.whl
+08-fabric-iq-retail-ontology/Ontology/retail_ontology_package.iq
 ```
 
 ## Where to put them
