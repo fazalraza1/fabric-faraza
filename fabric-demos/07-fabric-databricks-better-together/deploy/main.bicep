@@ -102,9 +102,11 @@ module fabric 'modules/fabric.bicep' = if (deployFabricCapacity) {
 output databricksWorkspaceUrl string = databricks.outputs.workspaceUrl
 output databricksWorkspaceId  string = databricks.outputs.workspaceId
 output storageAccountName     string = storage.outputs.storageAccountName
+output storageAccountId       string = storage.outputs.storageAccountId
 output storageContainerName   string = containerName
 output adlsGen2Endpoint       string = storage.outputs.dfsEndpoint
 output keyVaultUri            string = keyvault.outputs.keyVaultUri
+output keyVaultName           string = keyVaultName
 // Only output capacity details when a new one was deployed
 // Use null-conditional operator (?.) because fabric module is conditionally deployed (BCP318 fix)
 output fabricCapacityName     string = fabric.?outputs.capacityName ?? 'existing-capacity-used'
