@@ -42,7 +42,7 @@
     "typecheck": "tsc -b"
   },
   "rayfinPacks": [
-    "data-modeling",
+    "connectors",
     "visuals"
   ]
 }

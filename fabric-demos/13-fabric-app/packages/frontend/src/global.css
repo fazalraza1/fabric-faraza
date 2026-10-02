@@ -97,6 +97,7 @@ html[data-theme="dark"] {
   --color-border: var(--cp-border);
   --color-input: var(--cp-border);
   --color-ring: var(--cp-accent);
+  --color-warning: var(--cp-warning);
 
   --radius-none: 0;
   --radius-sm: 2px;
@@ -162,9 +163,9 @@ html[data-theme="dark"] {
   /* Font Families
      Usage: font-* (e.g. font-heading, font-base) */
   --font-heading:
-    'Segoe UI', Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    'Space Grotesk', 'Segoe UI', Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-base:
-    'Segoe UI', Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    'Source Sans 3', 'Segoe UI', Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-monospace:
     Consolas, 'Courier New', Courier, monospace; /* code, pre-formatted text */
   --font-numeric:
@@ -218,6 +219,7 @@ html[data-theme="dark"] {
     --color-border: var(--cp-border);
     --color-input: var(--cp-border);
     --color-ring: var(--cp-accent);
+    --color-warning: var(--cp-warning);
 
     --color-brand: #115ea3;
     --color-brand-foreground: #479ef5;

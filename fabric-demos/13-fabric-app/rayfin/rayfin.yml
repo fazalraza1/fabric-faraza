@@ -11,11 +11,6 @@ services:
       enabled: false
     allowedRedirectUris:
       - http://localhost:5173
-  data:
-    enabled: true
-    path: packages/data
-    buildCommand: npm run build
-    dialect: mssql
   staticHosting:
     enabled: true
     path: packages/frontend
