@@ -5,9 +5,9 @@
 ## Scope
 
 Create an independently deployable learning project under
-`fazalraza1/fabric-faraza-development/14-fabric-app-usenergy`. Keep the
-development repository private and leave `13-fabric-app` unchanged. Do not
-deploy Azure or Microsoft Fabric resources while preparing this project.
+`fazalraza1/fabric-faraza/fabric-demos/14-fabric-app-usenergy`. Leave the
+other demos unchanged and do not deploy Azure or Microsoft Fabric resources while preparing
+this project.
 
 ## Confirmed requirements
 

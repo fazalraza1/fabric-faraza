@@ -140,12 +140,11 @@ The button opens the Azure Portal. After authentication, the portal lets you sel
 - Resource-name prefix and environment.
 - EIA and Census API keys as secure parameters.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ffazalraza1%2Ffabric-faraza-development%2Fmain%2F14-fabric-app-usenergy%2Finfra%2Fazuredeploy.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ffazalraza1%2Ffabric-faraza%2Fmain%2Ffabric-demos%2F14-fabric-app-usenergy%2Finfra%2Fazuredeploy.json)
 
-> **Private repository note:** The project is stored in a private GitHub repository. Azure
-> Portal cannot download a private raw GitHub template anonymously. The button is retained as
-> requested, but it may fail unless the template is copied to a publicly accessible URL. The
-> authenticated/manual Bicep deployment commands below are the reliable deployment path.
+> **Template source:** The deployment button reads the ARM template from the public
+> `fazalraza1/fabric-faraza` repository. If you move this demo to a private fork, host the
+> template at a publicly accessible URL or use the authenticated Bicep commands below.
 
 The API-key fields are ARM `secureString` parameters. Their values are not displayed in the
 deployment history or template outputs. The deployment writes them directly to Key Vault.
@@ -186,8 +185,8 @@ The readable source is `infra/main.bicep`. The portal button uses the compiled
 `infra/azuredeploy.json`.
 
 ```powershell
-git clone https://github.com/fazalraza1/fabric-faraza-development.git
-Set-Location .\fabric-faraza-development\14-fabric-app-usenergy
+git clone https://github.com/fazalraza1/fabric-faraza.git
+Set-Location .\fabric-faraza\fabric-demos\14-fabric-app-usenergy
 
 # Compile and inspect without deploying
 az bicep build `
@@ -438,7 +437,7 @@ before connecting the application.
 ## Step 8: Restore and validate the application locally
 
 ```powershell
-Set-Location .\fabric-faraza-development\14-fabric-app-usenergy
+Set-Location .\fabric-faraza\fabric-demos\14-fabric-app-usenergy
 npm install
 npm run typecheck
 npm run build
