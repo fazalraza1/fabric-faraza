@@ -21,8 +21,9 @@ from urllib.request import Request, urlopen
 EIA_BASE_URL = "https://api.eia.gov/v2"
 EIA_OPERATIONAL_ROUTE = "electricity/electric-power-operational-data"
 EIA_RETAIL_ROUTE = "electricity/retail-sales"
-CENSUS_URL = "https://api.census.gov/data/2025/pep/population"
-CENSUS_VARIABLE = "POP_2025"
+CENSUS_VINTAGE = "2021"
+CENSUS_URL = f"https://api.census.gov/data/{CENSUS_VINTAGE}/pep/population"
+CENSUS_VARIABLE = f"POP_{CENSUS_VINTAGE}"
 PAGE_SIZE = 5000
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
@@ -248,7 +249,16 @@ def _collect_records(
     headers = census_payload[0]
     if CENSUS_VARIABLE not in headers:
         raise RuntimeError(f"Census response does not contain {CENSUS_VARIABLE}.")
-    census_rows = [dict(zip(headers, row)) for row in census_payload[1:]]
+    census_rows = [
+        dict(zip(headers, row))
+        for row in census_payload[1:]
+        if dict(zip(headers, row)).get("state") != "72"
+    ]
+    if len(census_rows) != 51:
+        raise RuntimeError(
+            f"Census returned {len(census_rows)} state/DC rows after excluding Puerto Rico; "
+            "expected 51."
+        )
 
     for name, rows in {"operational": operational_rows, "retail_sales": retail_rows}.items():
         missing = sorted(set(selected_periods) - {str(row.get("period")) for row in rows})
@@ -312,10 +322,10 @@ def _collect_records(
 
     for row in census_rows:
         record = _record_base(
-            "census_population_vintage_2025",
+            f"census_population_vintage_{CENSUS_VINTAGE}",
             CENSUS_URL,
             {CENSUS_VARIABLE: "persons"},
-            {"vintage": "2025", "variable": CENSUS_VARIABLE},
+            {"vintage": CENSUS_VINTAGE, "variable": CENSUS_VARIABLE},
             batch_id,
             retrieved_at,
         )

@@ -63,7 +63,7 @@ It never creates sample rows.
 * EIA v2 `electricity/electric-power-operational-data` — monthly state/fuel generation,
   consumption-for-electricity-generation, and Btu fields.
 * EIA v2 `electricity/retail-sales` — monthly state retail sales MWh.
-* Census Population Estimates API — Vintage 2025 state population estimate.
+* Census Population Estimates API — Vintage 2021 state population estimate.
 
 Bind this notebook to a schema-enabled Lakehouse before running. In production, pass the
 parameters from a Fabric Variable Library or pipeline; do not place keys in notebook source.
@@ -76,8 +76,8 @@ key_vault_url = ""  # e.g. https://<vault>.vault.azure.net/
 eia_secret_name = "eia-api-key"
 census_secret_name = "census-api-key"
 eia_base_url = "https://api.eia.gov/v2"
-census_population_url = "https://api.census.gov/data/2025/pep/population"
-census_population_variable = "POP_2025"
+census_population_url = "https://api.census.gov/data/2021/pep/population"
+census_population_variable = "POP_2021"
 expected_jurisdictions = 51
 page_size = 5000
 """,
@@ -288,14 +288,23 @@ census_response = session.get(census_population_url, params=census_params, timeo
 census_response.raise_for_status()
 census_payload = census_response.json()
 if not isinstance(census_payload, list) or len(census_payload) < 2:
-    raise RuntimeError("Census Vintage 2025 endpoint returned no state population rows.")
+    raise RuntimeError("Census Vintage 2021 endpoint returned no state population rows.")
 headers = census_payload[0]
 if census_population_variable not in headers:
     raise RuntimeError(
         f"Census response does not contain {census_population_variable}; "
         "do not substitute an older vintage silently."
     )
-census_rows = [dict(zip(headers, row)) for row in census_payload[1:]]
+census_rows = [
+    dict(zip(headers, row))
+    for row in census_payload[1:]
+    if dict(zip(headers, row)).get("state") != "72"
+]
+if len(census_rows) != expected_jurisdictions:
+    raise RuntimeError(
+        f"Census returned {len(census_rows)} state/DC rows after excluding Puerto Rico; "
+        f"expected {expected_jurisdictions}."
+    )
 """
         ),
         code(
@@ -373,12 +382,12 @@ def retail_record(row):
 
 def census_record(row):
     return (
-        "census_population_vintage_2025", None, None, as_text(row.get("NAME")),
+        "census_population_vintage_2021", None, None, as_text(row.get("NAME")),
         as_text(row.get("state")), None, None, None, None, None, None, None, None,
         None, as_text(row.get(census_population_variable)),
         None, None, None,
         census_response.url, json.dumps({census_population_variable: "persons"}),
-        json.dumps({"vintage": "2025", "variable": census_population_variable}),
+        json.dumps({"vintage": "2021", "variable": census_population_variable}),
         batch_id, retrieved_at, retrieved_at.date(),
     )
 
@@ -419,7 +428,7 @@ counts = {row["dataset_name"]: row["count"] for row in bronze_df.groupBy("datase
 required = {
     "eia_electric_power_operational",
     "eia_retail_sales",
-    "census_population_vintage_2025",
+    "census_population_vintage_2021",
 }
 if set(counts) != required or any(counts[name] == 0 for name in required):
     raise RuntimeError(f"Bronze validation failed; source counts: {counts}")
@@ -541,7 +550,7 @@ counts = {
 required_datasets = {
     "eia_electric_power_operational",
     "eia_retail_sales",
-    "census_population_vintage_2025",
+    "census_population_vintage_2021",
 }
 if set(counts) != required_datasets or any(counts[name] == 0 for name in required_datasets):
     raise RuntimeError(f"Azure Bronze validation failed; source counts: {counts}")
@@ -719,13 +728,13 @@ retail = (
 )
 
 population = (
-    raw.where(F.col("dataset_name") == "census_population_vintage_2025")
+    raw.where(F.col("dataset_name") == "census_population_vintage_2021")
     .withColumnRenamed("state_fips_raw", "census_state_fips")
     .withColumn("population", numeric_value("population_raw").cast("long"))
     .join(F.broadcast(states), "census_state_fips", "inner")
     .select(
         "state_code", "state_name", "census_state_fips", "population",
-        F.lit(2025).alias("estimate_year"), F.lit("Vintage 2025").alias("vintage"),
+        F.lit(2021).alias("estimate_year"), F.lit("Vintage 2021").alias("vintage"),
         "source_url", "batch_id", "ingested_at_utc",
     )
 )
@@ -936,7 +945,7 @@ gold_energy = (
         ratio(F.col("generation_mwh"), F.col("population")) * 1000,
     )
     .withColumnRenamed("generation_status", "value_status")
-    .withColumn("source", F.lit("EIA v2 electric-power-operational-data; Census PEP Vintage 2025"))
+    .withColumn("source", F.lit("EIA v2 electric-power-operational-data; Census PEP Vintage 2021"))
     .withColumn("generation_unit", F.lit("MWh"))
     .withColumn("consumption_unit", F.lit("MMBtu"))
     .select(
@@ -989,7 +998,7 @@ state_month = (
             + F.when(F.col("retail_sales_status") == "reported", 1).otherwise(0)
         ) / (F.col("fuel_rows") + 1) * 100,
     )
-    .withColumn("source", F.lit("EIA v2 operational + retail-sales; Census PEP Vintage 2025"))
+    .withColumn("source", F.lit("EIA v2 operational + retail-sales; Census PEP Vintage 2021"))
     .select(
         "period", "state_code", "state_name", "population", "generation_mwh",
         "retail_sales_mwh", "generation_mwh_per_1000_residents",
@@ -1025,7 +1034,7 @@ national = (
         ratio(F.col("retail_sales_mwh") - F.col("previous_retail_sales_mwh"), F.col("previous_retail_sales_mwh")) * 100,
     )
     .withColumn("completeness_pct", F.col("reporting_jurisdictions") / F.col("expected_jurisdictions") * 100)
-    .withColumn("source", F.lit("EIA v2 operational + retail-sales; Census PEP Vintage 2025"))
+    .withColumn("source", F.lit("EIA v2 operational + retail-sales; Census PEP Vintage 2021"))
     .select(
         "period", "population", "generation_mwh", "retail_sales_mwh",
         "electricity_consumption_kwh_per_person", "carbon_free_share_pct",
@@ -1067,7 +1076,7 @@ for dataset_name, frame, source in [
     )
 freshness_rows.append(
     (
-        "Census population", "Census PEP Vintage 2025", None, selected_periods[-1],
+        "Census population", "Census PEP Vintage 2021", None, selected_periods[-1],
         selected_periods[0], population.agg(F.max("ingested_at_utc")).first()[0],
         expected_jurisdictions, population.select("state_code").distinct().count(),
         population.select("state_code").distinct().count() / expected_jurisdictions * 100,
