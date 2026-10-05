@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -27,15 +28,16 @@ RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
 def _az(*arguments: str) -> str:
+    executable = shutil.which("az") or shutil.which("az.cmd") or shutil.which("az.exe")
+    if not executable:
+        raise RuntimeError("Azure CLI is required and must be available on PATH.")
     try:
         result = subprocess.run(
-            ["az", *arguments],
+            [executable, *arguments],
             check=True,
             capture_output=True,
             text=True,
         )
-    except FileNotFoundError as exc:
-        raise RuntimeError("Azure CLI is required and must be available on PATH.") from exc
     except subprocess.CalledProcessError as exc:
         detail = exc.stderr.strip() or exc.stdout.strip() or "Azure CLI command failed."
         raise RuntimeError(detail) from exc
