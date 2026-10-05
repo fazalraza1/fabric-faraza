@@ -1,22 +1,21 @@
+"""Fetch one U.S. energy batch and upload it to the ADLS raw container."""
+
 from __future__ import annotations
 
+import argparse
 import json
-import logging
 import os
+import subprocess
+import sys
+import time
 import uuid
 from datetime import datetime, timezone
+from email.utils import format_datetime
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote, urlencode
+from urllib.request import Request, urlopen
 
-import azure.functions as func
-import requests
-from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
-from azure.keyvault.secrets import SecretClient
-from azure.storage.blob import BlobServiceClient, ContentSettings
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-
-
-app = func.FunctionApp()
 
 EIA_BASE_URL = "https://api.eia.gov/v2"
 EIA_OPERATIONAL_ROUTE = "electricity/electric-power-operational-data"
@@ -24,57 +23,74 @@ EIA_RETAIL_ROUTE = "electricity/retail-sales"
 CENSUS_URL = "https://api.census.gov/data/2025/pep/population"
 CENSUS_VARIABLE = "POP_2025"
 PAGE_SIZE = 5000
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
-def _credential():
-    if os.getenv("WEBSITE_HOSTNAME"):
-        return ManagedIdentityCredential()
-    return DefaultAzureCredential()
+def _az(*arguments: str) -> str:
+    try:
+        result = subprocess.run(
+            ["az", *arguments],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("Azure CLI is required and must be available on PATH.") from exc
+    except subprocess.CalledProcessError as exc:
+        detail = exc.stderr.strip() or exc.stdout.strip() or "Azure CLI command failed."
+        raise RuntimeError(detail) from exc
+    return result.stdout.strip()
 
 
-def _required_setting(name: str) -> str:
-    value = os.getenv(name, "").strip()
-    if not value:
-        raise RuntimeError(f"Required application setting '{name}' is missing.")
-    return value
+def _json_get(
+    url: str,
+    params: list[tuple[str, str]],
+    *,
+    timeout: int = 90,
+    attempts: int = 6,
+) -> Any:
+    request_url = f"{url}?{urlencode(params)}" if params else url
+    for attempt in range(attempts):
+        request = Request(
+            request_url,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "fabric-usenergy-one-time-loader/1.0",
+            },
+        )
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            if exc.code not in RETRYABLE_STATUS_CODES or attempt == attempts - 1:
+                body = exc.read().decode("utf-8", errors="replace")
+                raise RuntimeError(
+                    f"GET {url} failed with HTTP {exc.code}: {body[:500]}"
+                ) from exc
+            retry_after = exc.headers.get("Retry-After")
+            delay = float(retry_after) if retry_after else 2**attempt
+        except URLError as exc:
+            if attempt == attempts - 1:
+                raise RuntimeError(f"GET {url} failed: {exc.reason}") from exc
+            delay = 2**attempt
+        time.sleep(delay)
+    raise RuntimeError(f"GET {url} exhausted all retry attempts.")
 
 
-def _session() -> requests.Session:
-    session = requests.Session()
-    session.mount(
-        "https://",
-        HTTPAdapter(
-            max_retries=Retry(
-                total=5,
-                backoff_factor=1.0,
-                status_forcelist=[429, 500, 502, 503, 504],
-                allowed_methods=["GET"],
-            )
-        ),
-    )
-    return session
-
-
-def _eia_get(session: requests.Session, route: str, params: list[tuple[str, str]]) -> dict[str, Any]:
-    response = session.get(
-        f"{EIA_BASE_URL}/{route.strip('/')}/data/",
-        params=params,
-        timeout=90,
-    )
-    response.raise_for_status()
-    payload = response.json()
+def _eia_get(route: str, params: list[tuple[str, str]]) -> dict[str, Any]:
+    payload = _json_get(f"{EIA_BASE_URL}/{route.strip('/')}/data/", params)
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"EIA returned an invalid payload for {route}.")
     if payload.get("error"):
         raise RuntimeError(f"EIA returned an error for {route}: {payload['error']}")
     return payload
 
 
-def _metadata_end_period(session: requests.Session, route: str, api_key: str) -> str:
-    response = session.get(
+def _metadata_end_period(route: str, api_key: str) -> str:
+    payload = _json_get(
         f"{EIA_BASE_URL}/{route.strip('/')}/",
-        params={"api_key": api_key},
-        timeout=90,
+        [("api_key", api_key)],
     )
-    response.raise_for_status()
     periods: list[str] = []
 
     def visit(value: Any) -> None:
@@ -92,7 +108,7 @@ def _metadata_end_period(session: requests.Session, route: str, api_key: str) ->
             for child in value:
                 visit(child)
 
-    visit(response.json())
+    visit(payload)
     if not periods:
         raise RuntimeError(f"EIA metadata for {route} did not include a monthly endPeriod.")
     return max(periods)
@@ -111,7 +127,6 @@ def _month_sequence(end_period: str, count: int) -> list[str]:
 
 
 def _eia_pages(
-    session: requests.Session,
     route: str,
     api_key: str,
     fields: list[str],
@@ -132,14 +147,17 @@ def _eia_pages(
         ]
         params.extend((f"data[{index}]", field) for index, field in enumerate(fields))
         params.extend(extra_params)
-        response = _eia_get(session, route, params).get("response") or {}
+        response = _eia_get(route, params).get("response") or {}
         page = response.get("data") or []
+        if not isinstance(page, list):
+            raise RuntimeError(f"EIA returned invalid row data for {route}.")
         rows.extend(page)
         metadata = {key: value for key, value in response.items() if key != "data"}
         total = int(response.get("total") or 0)
         offset += len(page)
         if not page or offset >= total:
             break
+        time.sleep(0.15)
     if len(rows) != int(metadata.get("total") or len(rows)):
         raise RuntimeError(f"Incomplete EIA pagination for {route}: {len(rows)} rows retrieved.")
     return source_url, metadata, rows
@@ -185,27 +203,18 @@ def _record_base(
     }
 
 
-def _collect_records() -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    key_vault_url = _required_setting("KEY_VAULT_URL")
-    eia_secret_name = _required_setting("EIA_SECRET_NAME")
-    census_secret_name = _required_setting("CENSUS_SECRET_NAME")
-    credential = _credential()
-    secret_client = SecretClient(vault_url=key_vault_url, credential=credential)
-    eia_key = secret_client.get_secret(eia_secret_name).value
-    census_key = secret_client.get_secret(census_secret_name).value
-    if not eia_key or not census_key:
-        raise RuntimeError("The configured EIA or Census secret is empty.")
-
-    session = _session()
+def _collect_records(
+    eia_key: str,
+    census_key: str,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     common_end = min(
-        _metadata_end_period(session, EIA_OPERATIONAL_ROUTE, eia_key),
-        _metadata_end_period(session, EIA_RETAIL_ROUTE, eia_key),
+        _metadata_end_period(EIA_OPERATIONAL_ROUTE, eia_key),
+        _metadata_end_period(EIA_RETAIL_ROUTE, eia_key),
     )
     selected_periods = _month_sequence(common_end, 8)
     window = [("start", selected_periods[0]), ("end", selected_periods[-1])]
 
     operational_url, operational_metadata, operational_rows = _eia_pages(
-        session,
         EIA_OPERATIONAL_ROUTE,
         eia_key,
         [
@@ -218,20 +227,20 @@ def _collect_records() -> tuple[list[dict[str, Any]], dict[str, Any]]:
         window + [("facets[sectorid][]", "99")],
     )
     retail_url, retail_metadata, retail_rows = _eia_pages(
-        session,
         EIA_RETAIL_ROUTE,
         eia_key,
         ["sales"],
         window + [("facets[sectorid][]", "ALL")],
     )
 
-    census_response = session.get(
+    census_payload = _json_get(
         CENSUS_URL,
-        params={"get": f"NAME,{CENSUS_VARIABLE}", "for": "state:*", "key": census_key},
-        timeout=90,
+        [
+            ("get", f"NAME,{CENSUS_VARIABLE}"),
+            ("for", "state:*"),
+            ("key", census_key),
+        ],
     )
-    census_response.raise_for_status()
-    census_payload = census_response.json()
     if not isinstance(census_payload, list) or len(census_payload) < 2:
         raise RuntimeError("Census Population Estimates API returned no state rows.")
     headers = census_payload[0]
@@ -302,7 +311,7 @@ def _collect_records() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     for row in census_rows:
         record = _record_base(
             "census_population_vintage_2025",
-            census_response.url,
+            CENSUS_URL,
             {CENSUS_VARIABLE: "persons"},
             {"vintage": "2025", "variable": CENSUS_VARIABLE},
             batch_id,
@@ -330,72 +339,166 @@ def _collect_records() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     return records, manifest
 
 
-def _run_ingestion() -> dict[str, Any]:
-    records, manifest = _collect_records()
-    credential = _credential()
-    account_url = _required_setting("STORAGE_ACCOUNT_URL")
-    container_name = _required_setting("RAW_CONTAINER_NAME")
-    container = BlobServiceClient(account_url=account_url, credential=credential).get_container_client(
-        container_name
+def _resolve_secret(
+    *,
+    environment_name: str,
+    key_vault_name: str | None,
+    secret_name: str,
+) -> str:
+    value = os.getenv(environment_name, "").strip()
+    if value:
+        return value
+    if key_vault_name:
+        value = _az(
+            "keyvault",
+            "secret",
+            "show",
+            "--vault-name",
+            key_vault_name,
+            "--name",
+            secret_name,
+            "--query",
+            "value",
+            "--output",
+            "tsv",
+        ).strip()
+        if value:
+            return value
+    raise RuntimeError(
+        f"Set {environment_name} or provide --key-vault-name with access to '{secret_name}'."
     )
+
+
+def _upload_blob(
+    *,
+    account_name: str,
+    container_name: str,
+    blob_path: str,
+    payload: bytes,
+    content_type: str,
+    access_token: str,
+) -> None:
+    encoded_path = quote(blob_path, safe="/")
+    url = f"https://{account_name}.blob.core.windows.net/{container_name}/{encoded_path}"
+    request = Request(
+        url,
+        data=payload,
+        method="PUT",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Content-Length": str(len(payload)),
+            "Content-Type": content_type,
+            "x-ms-blob-type": "BlockBlob",
+            "x-ms-date": format_datetime(datetime.now(timezone.utc), usegmt=True),
+            "x-ms-version": "2023-11-03",
+        },
+    )
+    try:
+        with urlopen(request, timeout=120) as response:
+            if response.status not in {200, 201}:
+                raise RuntimeError(
+                    f"Storage upload for {blob_path} returned HTTP {response.status}."
+                )
+    except HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(
+            f"Storage upload for {blob_path} failed with HTTP {exc.code}: {body[:1000]}"
+        ) from exc
+    except URLError as exc:
+        raise RuntimeError(f"Storage upload for {blob_path} failed: {exc.reason}") from exc
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Fetch the latest common EIA/Census reporting window and upload one Bronze-ready "
+            "batch to Azure Storage."
+        )
+    )
+    parser.add_argument(
+        "--storage-account",
+        default=os.getenv("USENERGY_STORAGE_ACCOUNT"),
+        required=not bool(os.getenv("USENERGY_STORAGE_ACCOUNT")),
+        help="Storage account name. Defaults to USENERGY_STORAGE_ACCOUNT.",
+    )
+    parser.add_argument("--container", default="raw", help="Existing blob container name.")
+    parser.add_argument(
+        "--key-vault-name",
+        default=os.getenv("USENERGY_KEY_VAULT"),
+        help="Optional Key Vault name. Defaults to USENERGY_KEY_VAULT.",
+    )
+    parser.add_argument("--eia-secret-name", default="eia-api-key")
+    parser.add_argument("--census-secret-name", default="census-api-key")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = _parse_args()
+    _az("account", "show", "--output", "none")
+    eia_key = _resolve_secret(
+        environment_name="EIA_API_KEY",
+        key_vault_name=args.key_vault_name,
+        secret_name=args.eia_secret_name,
+    )
+    census_key = _resolve_secret(
+        environment_name="CENSUS_API_KEY",
+        key_vault_name=args.key_vault_name,
+        secret_name=args.census_secret_name,
+    )
+
+    print("Fetching the latest common EIA and Census reporting window...")
+    records, manifest = _collect_records(eia_key, census_key)
     batch_path = (
         f"energy/{manifest['retrieved_at_utc'][:10].replace('-', '/')}/{manifest['batch_id']}"
     )
-    ndjson = "\n".join(json.dumps(record, separators=(",", ":")) for record in records)
-    container.upload_blob(
-        f"{batch_path}/bronze_records.jsonl",
-        ndjson,
-        overwrite=True,
-        content_settings=ContentSettings(content_type="application/x-ndjson"),
-    )
     manifest["bronze_records_path"] = f"{batch_path}/bronze_records.jsonl"
-    manifest_json = json.dumps(manifest, indent=2)
-    container.upload_blob(
-        f"{batch_path}/manifest.json",
-        manifest_json,
-        overwrite=True,
-        content_settings=ContentSettings(content_type="application/json"),
+    ndjson = "\n".join(
+        json.dumps(record, separators=(",", ":"), ensure_ascii=True) for record in records
+    ).encode("utf-8")
+    manifest_json = json.dumps(manifest, indent=2, ensure_ascii=True).encode("utf-8")
+    access_token = _az(
+        "account",
+        "get-access-token",
+        "--resource",
+        "https://storage.azure.com/",
+        "--query",
+        "accessToken",
+        "--output",
+        "tsv",
     )
-    container.upload_blob(
-        "energy/latest.json",
-        manifest_json,
-        overwrite=True,
-        content_settings=ContentSettings(content_type="application/json"),
+
+    print(f"Uploading batch {manifest['batch_id']} to {args.storage_account}/{args.container}...")
+    _upload_blob(
+        account_name=args.storage_account,
+        container_name=args.container,
+        blob_path=manifest["bronze_records_path"],
+        payload=ndjson,
+        content_type="application/x-ndjson",
+        access_token=access_token,
     )
-    logging.info("Completed U.S. energy ingestion batch %s.", manifest["batch_id"])
-    return manifest
+    _upload_blob(
+        account_name=args.storage_account,
+        container_name=args.container,
+        blob_path=f"{batch_path}/manifest.json",
+        payload=manifest_json,
+        content_type="application/json",
+        access_token=access_token,
+    )
+    _upload_blob(
+        account_name=args.storage_account,
+        container_name=args.container,
+        blob_path="energy/latest.json",
+        payload=manifest_json,
+        content_type="application/json",
+        access_token=access_token,
+    )
+    print(json.dumps(manifest, indent=2))
+    return 0
 
 
-@app.timer_trigger(
-    schedule="%INGEST_SCHEDULE%",
-    arg_name="timer",
-    run_on_startup=False,
-    use_monitor=True,
-)
-def scheduled_energy_ingestion(timer: func.TimerRequest) -> None:
-    if timer.past_due:
-        logging.warning("The U.S. energy ingestion timer is past due.")
-    _run_ingestion()
-
-
-@app.route(route="ingest", methods=["POST"], auth_level=func.AuthLevel.FUNCTION)
-def manual_energy_ingestion(request: func.HttpRequest) -> func.HttpResponse:
+if __name__ == "__main__":
     try:
-        manifest = _run_ingestion()
-        return func.HttpResponse(
-            json.dumps(manifest),
-            status_code=200,
-            mimetype="application/json",
-        )
-    except Exception:
-        logging.exception("U.S. energy ingestion failed.")
-        return func.HttpResponse(
-            json.dumps(
-                {
-                    "status": "failed",
-                    "message": "Ingestion failed. Review Application Insights for details.",
-                }
-            ),
-            status_code=500,
-            mimetype="application/json",
-        )
+        raise SystemExit(main())
+    except Exception as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc

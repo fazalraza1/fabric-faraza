@@ -17,13 +17,16 @@ coverage
 # plugin can still write it into an app that used that flow.
 packages/frontend/src/fabric.generated.ts
 
-# Local function host settings may contain developer-only secrets
+# Local settings may contain developer-only secrets
 packages/functions/local.settings.json
-azure-function/local.settings.json
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Local remnants from the retired Azure Function path
 azure-function/.python_packages/
 azure-function/.venv/
-azure-function/__pycache__/
-azure-function/*.zip
 
 # Generated deployment and environment state
 .env.local

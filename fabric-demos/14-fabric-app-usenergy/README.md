@@ -17,17 +17,18 @@ deploy anything automatically from this repository. You decide when and where to
 ```text
 EIA Open Data + Census Population Estimates
                     |
-                    v
-      Azure Function scheduled ingestion
+          +---------+---------+
+          |                   |
+          v                   v
+ One-time local REST     Fabric Bronze notebook
+ loader -> ADLS raw      calls APIs directly
+          |                   |
+          v                   |
+ Fabric Lakehouse shortcut    |
+          +---------+---------+
                     |
                     v
-    Azure Data Lake Storage raw landing zone
-                    |
-                    v
-       Fabric Lakehouse shortcut to Azure
-                    |
-                    v
-        Bronze -> Silver -> Gold Delta tables
+       Bronze -> Silver -> Gold Delta tables
                     |
                     v
        Lakehouse SQL analytics endpoint
@@ -40,12 +41,16 @@ The Azure deployment creates:
 
 - Azure Key Vault for the EIA and Census API keys.
 - A hierarchical-namespace Storage account and private `raw` container.
-- A Python Azure Function on Flex Consumption for scheduled and manual ingestion.
-- Application Insights and Log Analytics for monitoring.
-- Managed identity and least-privilege Key Vault and Storage role assignments.
 
 The Microsoft Fabric portion is intentionally portal-guided so learners can see how the
 Lakehouse, shortcut, notebooks, SQL analytics endpoint, connector, and Fabric App fit together.
+
+There are two supported ingestion options:
+
+1. **One-time local REST loader to ADLS** — preserves the Azure landing zone and Fabric shortcut.
+2. **Fabric-direct notebook** — calls EIA and Census from Fabric and writes Bronze directly.
+
+Choose one Bronze path for a refresh. Do not run both against the same batch.
 
 ## Solution features
 
@@ -67,11 +72,6 @@ Lakehouse, shortcut, notebooks, SQL analytics endpoint, connector, and Fabric Ap
 fabric-app-usenergy/
 ├── .azure/
 │   └── deployment-plan.md
-├── azure-function/
-│   ├── function_app.py
-│   ├── host.json
-│   ├── local.settings.json.example
-│   └── requirements.txt
 ├── infra/
 │   ├── main.bicep
 │   ├── main.parameters.json
@@ -89,7 +89,7 @@ fabric-app-usenergy/
 │   └── rayfin.yml
 ├── scripts/
 │   ├── build_energy_notebooks.py
-│   └── deploy-function.ps1
+│   └── ingest_energy_once.py
 ├── README.md
 └── TALKING_POINTS.md
 ```
@@ -115,9 +115,8 @@ fabric-app-usenergy/
 | Git | Latest stable | Clone and inspect the project |
 | Node.js | 24 LTS | Build the Fabric App |
 | npm | 11.x | Restore JavaScript workspaces |
-| Python | 3.11 | Regenerate notebooks and develop the ingestion Function |
-| Azure CLI | Latest stable | Validate or manually deploy Bicep |
-| Azure Functions Core Tools | Version 4 | Publish the Function source |
+| Python | 3.11+ | Run the one-time loader and regenerate notebooks |
+| Azure CLI | Latest stable | Deploy Bicep and authenticate the one-time loader |
 | PowerShell | 7.4+ | Run the documented helper commands |
 
 Check local versions:
@@ -128,7 +127,6 @@ node --version
 npm --version
 python --version
 az version
-func --version
 $PSVersionTable.PSVersion
 ```
 
@@ -141,34 +139,40 @@ The button opens the Azure Portal. After authentication, the portal lets you sel
 - Azure region.
 - Resource-name prefix and environment.
 - EIA and Census API keys as secure parameters.
-- The ingestion schedule.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ffazalraza1%2Ffabric-faraza%2Fmain%2Ffabric-demos%2F14-fabric-app-usenergy%2Finfra%2Fazuredeploy.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ffazalraza1%2Ffabric-faraza-development%2Fmain%2F14-fabric-app-usenergy%2Finfra%2Fazuredeploy.json)
 
-The deployment button uses the public ARM template committed with this demo. The
-authenticated/manual Bicep deployment commands below remain available for validation and
-controlled deployments.
+> **Private repository note:** The project is stored in a private GitHub repository. Azure
+> Portal cannot download a private raw GitHub template anonymously. The button is retained as
+> requested, but it may fail unless the template is copied to a publicly accessible URL. The
+> authenticated/manual Bicep deployment commands below are the reliable deployment path.
 
 The API-key fields are ARM `secureString` parameters. Their values are not displayed in the
 deployment history or template outputs. The deployment writes them directly to Key Vault.
 
+> **Existing deployment note:** Azure Resource Manager incremental deployments do not delete
+> resources removed from a template. If you previously deployed the Function-based version,
+> redeploying this template leaves the old Function App, Flex plan, Application Insights, Log
+> Analytics workspace, and `deploymentpackage` container in place. Delete those retired
+> resources manually after confirming nothing else uses them, or recreate a dedicated demo
+> resource group.
+
 ### Region selection
 
 The template defaults to the selected resource group's region, but you can choose another region
-in the deployment form. Pick a region that supports Azure Functions Flex Consumption. All
-regional services are deployed together in the selected region.
+in the deployment form. Storage and Key Vault are deployed together in the selected region.
 
 ### Resource naming
 
 You provide a short lowercase prefix such as `usenergy`. The template combines the prefix,
-environment, and a deterministic unique suffix. This avoids common Storage, Key Vault, and
-Function App naming collisions.
+environment, and a deterministic unique suffix. This avoids common Storage and Key Vault naming
+collisions.
 
 ### What the button does not deploy
 
 The button creates the Azure services and configuration. It does not:
 
-- Publish the Python Function source.
+- Run either ingestion option.
 - Create a Fabric workspace or capacity.
 - Create Fabric Lakehouse, notebook, shortcut, or application items.
 - Add a Rayfin connector, because your Fabric workspace and Lakehouse IDs do not exist yet.
@@ -182,8 +186,8 @@ The readable source is `infra/main.bicep`. The portal button uses the compiled
 `infra/azuredeploy.json`.
 
 ```powershell
-git clone https://github.com/fazalraza1/fabric-faraza.git
-Set-Location .\fabric-faraza\fabric-demos\14-fabric-app-usenergy
+git clone https://github.com/fazalraza1/fabric-faraza-development.git
+Set-Location .\fabric-faraza-development\14-fabric-app-usenergy
 
 # Compile and inspect without deploying
 az bicep build `
@@ -223,13 +227,11 @@ parameters and allow Azure CLI to prompt, or use a protected local parameter fil
 
 Open the completed Azure deployment and record these outputs:
 
-- `functionAppName`
 - `keyVaultName`
 - `keyVaultUri`
 - `storageAccountName`
 - `storageBlobEndpoint`
 - `rawContainerName`
-- `applicationInsightsName`
 
 You can also retrieve them with:
 
@@ -243,72 +245,80 @@ az deployment group show `
 
 Do not commit output files containing resource IDs or environment-specific names.
 
-## Step 3: Publish the Azure Function source
+## Step 3: Choose one ingestion option
 
-The deployment button creates an empty Function App so that infrastructure deployment remains
-reviewable and independent from source publishing.
+Both options produce the same Bronze contract. Use the local loader when you want an inspectable
+ADLS landing zone and shortcut. Use the Fabric-direct notebook when you want the fewest Azure
+moving parts.
 
-```powershell
-Set-Location .\fabric-faraza\fabric-demos\14-fabric-app-usenergy
-.\scripts\deploy-function.ps1 -FunctionAppName <FUNCTION_APP_NAME>
-```
+### Option A: Run the one-time local REST loader to ADLS
 
-The script runs:
+The dependency-free script calls EIA and Census REST APIs, selects the latest eight common
+monthly periods, and uploads Bronze-ready NDJSON plus immutable/latest manifests through the
+Azure Blob REST API. It uses your current `az login` identity and never writes API keys to disk.
 
-```powershell
-func azure functionapp publish <FUNCTION_APP_NAME> --python
-```
-
-The Function contains:
-
-- A timer trigger controlled by the `INGEST_SCHEDULE` app setting.
-- A function-key-protected `POST /api/ingest` endpoint for manual refresh.
-- Managed-identity access to Key Vault and Storage.
-- Retry handling for EIA/Census throttling and transient server errors.
-- A Bronze-ready NDJSON file plus immutable and latest manifests in the `raw` container.
-
-The default schedule is `0 0 6 * * *`, which runs daily at 06:00 UTC. This does not imply that
-source data changes daily; it allows a newly published monthly period to be discovered without
-manual intervention.
-
-### Run the first ingestion
-
-In the Azure Portal:
-
-1. Open the Function App.
-2. Select **Functions**.
-3. Open `manual_energy_ingestion`.
-4. Select **Get Function URL** and copy the default function-key URL.
-5. Send an HTTP `POST` request.
+Grant your signed-in user **Key Vault Secrets User** on the vault and **Storage Blob Data
+Contributor** on the Storage account:
 
 ```powershell
-Invoke-RestMethod `
-  -Method Post `
-  -Uri '<FUNCTION_URL_WITH_KEY>'
+az login
+$principalId = az ad signed-in-user show --query id --output tsv
+$vaultId = az keyvault show `
+  --resource-group <RESOURCE_GROUP> `
+  --name <KEY_VAULT_NAME> `
+  --query id `
+  --output tsv
+$storageId = az storage account show `
+  --resource-group <RESOURCE_GROUP> `
+  --name <STORAGE_ACCOUNT_NAME> `
+  --query id `
+  --output tsv
+
+az role assignment create `
+  --assignee-object-id $principalId `
+  --assignee-principal-type User `
+  --role "Key Vault Secrets User" `
+  --scope $vaultId
+
+az role assignment create `
+  --assignee-object-id $principalId `
+  --assignee-principal-type User `
+  --role "Storage Blob Data Contributor" `
+  --scope $storageId
 ```
 
-The successful response includes `batch_id`, `selected_periods`, row counts, and the
-`bronze_records_path`. Treat the URL as a secret because it contains a function key.
+Run the loader:
 
-### Confirm ingestion
+```powershell
+python .\scripts\ingest_energy_once.py `
+  --storage-account <STORAGE_ACCOUNT_NAME> `
+  --key-vault-name <KEY_VAULT_NAME>
+```
 
-Verify:
+Confirm the `raw` container contains:
 
-1. The Storage account `raw` container contains `energy/latest.json`.
-2. A dated batch folder contains `manifest.json` and `bronze_records.jsonl`.
-3. Application Insights shows a successful Function execution.
-4. No API key appears in logs, files, or responses.
+```text
+energy/latest.json
+energy/YYYY/MM/DD/<BATCH_ID>/manifest.json
+energy/YYYY/MM/DD/<BATCH_ID>/bronze_records.jsonl
+```
 
-## Step 4: Create the Fabric workspace identity
+### Option B: Call the APIs directly from Fabric
+
+Skip the local loader and Storage shortcut. Import `01_bronze_ingest.ipynb`, configure its
+`key_vault_url` parameter, and grant the Fabric workspace identity **Key Vault Secrets User** on
+the deployed vault. The notebook retrieves both secrets at runtime, calls the public APIs, and
+writes `bronze.energy_source_raw` directly.
+
+## Step 4: Configure the Fabric workspace identity
 
 In the target Fabric workspace:
 
 1. Open **Workspace settings**.
 2. Create or enable the workspace identity.
 3. Record its object/principal ID.
-4. In Azure, open the deployed Storage account.
-5. Open **Access control (IAM)**.
-6. Assign **Storage Blob Data Reader** to the Fabric workspace identity.
+4. For Option A, assign **Storage Blob Data Reader** on the deployed Storage account.
+5. For Option B, assign **Key Vault Secrets User** on the deployed Key Vault.
 
 The Azure deployment cannot assign this permission because the Fabric workspace identity is
 created later and differs for every learner.
@@ -317,29 +327,30 @@ If your organization does not allow workspace identity, create the shortcut usin
 administrator-approved organizational account or service principal. Do not store credentials in
 the repository.
 
-## Step 5: Create the Fabric Lakehouse and Azure shortcut
+## Step 5: Create the Fabric Lakehouse and optional Azure shortcut
 
 1. In the Fabric workspace, create a **schema-enabled Lakehouse**.
-2. In the Lakehouse, create a new shortcut under **Files**.
+2. If you chose Option A, create a new shortcut under **Files**.
 3. Select **Azure Data Lake Storage Gen2**.
-4. Use the deployed Storage account endpoint.
-5. Select the `raw` container.
-6. Authenticate with the workspace identity when available.
-7. Name the shortcut exactly:
+4. Use the deployed Storage account endpoint and select the `raw` container.
+5. Authenticate with the workspace identity when available.
+6. Name the shortcut exactly:
 
    ```text
    us-energy-raw
    ```
 
-8. Confirm this file can be browsed:
+7. Confirm this file can be browsed:
 
    ```text
    Files/us-energy-raw/energy/latest.json
    ```
 
+If you chose Option B, do not create the shortcut; the Fabric notebook writes Bronze directly.
+
 The Storage account permits authenticated public-network access because Fabric must reach it.
 Anonymous blob access and shared-key authentication are disabled. For production workloads,
-consider private networking after validating Fabric and Function connectivity requirements.
+consider private networking after validating Fabric connectivity requirements.
 
 ## Step 6: Import the Fabric notebooks
 
@@ -347,8 +358,8 @@ Import these files into the same Fabric workspace:
 
 | Notebook | Purpose |
 |---|---|
-| `01a_bronze_from_azure_landing.ipynb` | Recommended Azure path: reads the latest Function landing batch |
-| `01_bronze_ingest.ipynb` | Alternative path: calls EIA/Census directly from Fabric using Key Vault |
+| `01a_bronze_from_azure_landing.ipynb` | Option A: reads the latest one-time ADLS landing batch |
+| `01_bronze_ingest.ipynb` | Option B: calls EIA/Census directly from Fabric using Key Vault |
 | `02_silver_normalize.ipynb` | Normalizes states, fuels, units, missing values, and duplicate keys |
 | `03_gold_energy_explorer.ipynb` | Produces the application-ready Gold tables and metrics |
 
@@ -356,39 +367,38 @@ Bind every imported notebook to the schema-enabled Lakehouse.
 
 ### Choose one Bronze path
 
-**Recommended Azure learning path**
+**Option A: one-time local loader and Azure landing**
 
 ```text
 01a_bronze_from_azure_landing -> 02_silver_normalize -> 03_gold_energy_explorer
 ```
 
-This path demonstrates Azure ingestion, managed identity, Storage, a Fabric shortcut, and the
-Lakehouse medallion architecture.
+This path demonstrates REST ingestion, Entra-authenticated Storage upload, a Fabric shortcut,
+and the Lakehouse medallion architecture.
 
-**Fabric-only alternative**
+**Option B: Fabric-direct ingestion**
 
 ```text
 01_bronze_ingest -> 02_silver_normalize -> 03_gold_energy_explorer
 ```
 
-This path is useful when Azure Functions or Storage cannot be used. Configure Key Vault access
-for the Fabric notebook identity and provide the notebook parameters documented inside the
-notebook.
+This path removes the landing-zone step. Configure Key Vault access for the Fabric workspace
+identity and provide the notebook parameters documented inside the notebook.
 
 Never run both Bronze notebooks for the same refresh batch.
 
-### Execute the recommended notebooks
+### Execute the selected notebooks
 
-1. Run `01a_bronze_from_azure_landing.ipynb`.
+1. Run either `01a_bronze_from_azure_landing.ipynb` or `01_bronze_ingest.ipynb`.
 2. Confirm it loaded exactly three datasets and eight periods.
 3. Run `02_silver_normalize.ipynb`.
 4. Confirm every selected month contains 50 states plus the District of Columbia.
 5. Run `03_gold_energy_explorer.ipynb`.
 6. Confirm all Gold data-quality checks pass.
 
-For scheduled operation, create a Fabric Data Pipeline with sequential notebook activities.
-Retry documented transient failures only. Do not publish a partial month after a validation
-failure.
+For scheduled operation, use Option B in a Fabric Data Pipeline with sequential notebook
+activities. The local loader is intentionally a one-time/manual option. Retry documented
+transient failures only and do not publish a partial month after a validation failure.
 
 ## Step 7: Verify the Gold data contract
 
@@ -428,7 +438,7 @@ before connecting the application.
 ## Step 8: Restore and validate the application locally
 
 ```powershell
-Set-Location .\fabric-faraza\fabric-demos\14-fabric-app-usenergy
+Set-Location .\fabric-faraza-development\14-fabric-app-usenergy
 npm install
 npm run typecheck
 npm run build
@@ -578,10 +588,10 @@ Census population is an annual estimate applied to the selected monthly periods.
 - Fabric App assets remain protected and require Microsoft authentication.
 - Password authentication is disabled.
 - API keys are secure deployment parameters stored in Key Vault.
-- The Function uses managed identity rather than embedded Azure credentials.
+- The local loader uses the signed-in Azure CLI identity and does not write API keys to disk.
+- The Fabric-direct notebook retrieves API keys through the Fabric workspace identity.
 - Storage shared-key authorization and anonymous blob access are disabled.
-- Storage and Function endpoints require HTTPS and TLS 1.2 or later.
-- The manual ingestion endpoint requires a Function key.
+- Storage requires HTTPS and TLS 1.2 or later.
 - Key Vault uses RBAC, soft delete, and purge protection.
 - Environment-specific Fabric IDs and generated connector metadata are added only by the
   deployer.
@@ -592,35 +602,22 @@ Cloud, secret rotation, centralized alerting, and organization-specific complian
 
 ## Monitoring
 
-Use Application Insights to review:
-
-- Timer and manual-trigger execution success.
-- Request duration and dependency latency.
-- EIA or Census throttling and source errors.
-- Key Vault or Storage authorization failures.
-- Exception trends.
-
-Recommended alert conditions:
-
-- Any failed scheduled ingestion.
-- No successful ingestion within the expected refresh interval.
-- Repeated HTTP 429 or 5xx source responses.
-- Function execution duration approaching its platform limit.
-- Fabric `gold_data_freshness` status not equal to the expected healthy value.
+- The local loader prints the batch ID, selected periods, row counts, and uploaded path.
+- Fabric notebook runs retain execution output and can be monitored through a Fabric Data
+  Pipeline when scheduling Option B.
+- `gold.gold_data_freshness` records source coverage and the resulting health status.
+- Treat repeated HTTP 429/5xx responses, missing landing manifests, or unhealthy Gold freshness
+  as actionable failures.
 
 ## Cost guidance
 
 The template uses consumption-oriented services:
 
-- Azure Functions Flex Consumption.
 - Standard locally redundant Storage.
 - Standard Key Vault.
-- Consumption-based Log Analytics and Application Insights.
 
-Actual cost depends on region, execution frequency, log volume, data retention, Fabric capacity,
-and source volume. Review the Azure pricing calculator and your Fabric capacity model before
-production use. Application Insights ingestion can become the largest Azure cost for verbose
-logging.
+Actual cost depends on region, stored data, Fabric capacity, and source volume. Review the Azure
+pricing calculator and your Fabric capacity model before production use.
 
 ## Troubleshooting
 
@@ -630,22 +627,18 @@ The deploying identity needs `Microsoft.Authorization/roleAssignments/write`. As
 **User Access Administrator** plus **Contributor**, or use **Owner**, at the resource-group
 scope.
 
-### The Function cannot read Key Vault
+### The local loader cannot read Key Vault
 
-1. Confirm the Function has a system-assigned identity.
-2. Confirm it has **Key Vault Secrets User** on the deployed vault.
-3. Confirm `KEY_VAULT_URL`, `EIA_SECRET_NAME`, and `CENSUS_SECRET_NAME`.
+1. Confirm `az account show` returns the intended user and subscription.
+2. Confirm that user has **Key Vault Secrets User** on the deployed vault.
+3. Confirm the vault and secret names passed to the script.
 4. Allow several minutes for new RBAC assignments to propagate.
 
-### The Function cannot write Storage
+### The local loader cannot write Storage
 
-Confirm the Function identity has:
-
-- Storage Blob Data Owner.
-- Storage Queue Data Contributor.
-- Storage Table Data Contributor.
-
-Also verify that shared-key authorization remains disabled and the app settings use service URIs.
+Confirm the signed-in user has **Storage Blob Data Contributor** on the Storage account. Shared
+keys remain disabled; the loader requests a Storage bearer token from Azure CLI and uploads
+through the Blob REST API.
 
 ### The Fabric shortcut cannot read the raw container
 
@@ -656,8 +649,8 @@ Also verify that shared-key authorization remains disabled and the app settings 
 
 ### Notebook 01A reports that the latest manifest is missing
 
-Publish the Function code and run `manual_energy_ingestion` once. The infrastructure button
-creates the service but does not execute or publish application code.
+Run `scripts/ingest_energy_once.py` once and confirm `energy/latest.json` exists in the `raw`
+container. The infrastructure deployment creates Storage but does not ingest source data.
 
 ### Silver reports fewer than 51 jurisdictions
 
@@ -701,7 +694,7 @@ Delete only the items created for this demo:
 ### Azure
 
 If the resource group is dedicated to the demo, deleting that resource group removes the
-Function, Storage, Key Vault, monitoring resources, and role assignments:
+Storage account and Key Vault:
 
 ```powershell
 az group delete --name <RESOURCE_GROUP>
@@ -714,14 +707,15 @@ immediate permanent purge during its retention period.
 
 1. Show the GitHub deployment button and explain the selectable subscription, resource group,
    and region.
-2. Open the deployed resources and show managed identity, Key Vault, Storage, and monitoring.
-3. Trigger ingestion and inspect the batch manifest without exposing API keys.
+2. Explain the two ingestion choices and select the path appropriate for the audience.
+3. For Option A, run the one-time loader and inspect the batch manifest without exposing keys.
+   For Option B, show the Fabric notebook retrieving secrets through the workspace identity.
 4. Show the Fabric shortcut and Bronze/Silver/Gold notebook flow.
 5. Query the Gold tables from the SQL analytics endpoint.
 6. Open the protected Fabric App.
 7. Compare national trends, state per-capita consumption, and fuel mix.
 8. Finish on methodology and data quality to explain lineage and honest null handling.
 
-**Demo soundbite:** “The deployment button creates the reusable Azure landing layer, Fabric
-turns public source data into governed analytical products, and the Fabric App delivers those
-products as a secured operational experience.”
+**Demo soundbite:** “Choose a lightweight one-time Azure landing or ingest directly in Fabric;
+either way, Fabric turns public source data into governed analytical products for a secured
+application experience.”

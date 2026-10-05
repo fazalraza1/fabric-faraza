@@ -11,17 +11,18 @@ The solution demonstrates the complete path from source ingestion to user experi
 ```text
 EIA Open Data + Census Population Estimates
                     |
-                    v
-      Azure Function scheduled ingestion
+          +---------+---------+
+          |                   |
+          v                   v
+ One-time local REST     Fabric Bronze notebook
+ loader -> ADLS raw      calls APIs directly
+          |                   |
+          v                   |
+ Fabric Lakehouse shortcut    |
+          +---------+---------+
                     |
                     v
-    Azure Data Lake Storage raw landing zone
-                    |
-                    v
-       Fabric Lakehouse shortcut to Azure
-                    |
-                    v
-        Bronze -> Silver -> Gold Delta tables
+       Bronze -> Silver -> Gold Delta tables
                     |
                     v
        Lakehouse SQL analytics endpoint
@@ -42,10 +43,11 @@ suppressed values, and may be revised after publication. Population-normalized c
 another source with its own release cadence.
 
 The U.S. Energy Explorer demonstrates how to turn those independent sources into one governed
-analytical product. Azure securely acquires and lands the source data. Fabric applies a medallion
-architecture, validates coverage, calculates comparable metrics, and publishes curated Gold
-tables. A protected Fabric App then gives users an accessible way to explore national trends,
-compare states, inspect fuel mix, and understand the methodology behind every metric.
+analytical product. Teams can either run a one-time local loader into ADLS or call the APIs
+directly from a Fabric notebook. Fabric applies a medallion architecture, validates coverage,
+calculates comparable metrics, and publishes curated Gold tables. A protected Fabric App then
+gives users an accessible way to explore national trends, compare states, inspect fuel mix, and
+understand the methodology behind every metric.
 
 The key message is that the application does not hide uncertainty. Missing and suppressed values
 remain null, incomplete periods are not presented as complete, and the reporting window is
@@ -54,7 +56,7 @@ selected from periods common to the required sources.
 ### Core story
 
 1. Acquire EIA and Census data without embedding credentials in code.
-2. Land immutable raw batches in Azure Storage with manifests and operational monitoring.
+2. Choose an immutable ADLS landing batch or direct Fabric Bronze ingestion.
 3. Use a Fabric shortcut to make the landing zone available without copying it manually.
 4. Standardize and validate the data through Bronze, Silver, and Gold layers.
 5. Publish a stable five-table Gold contract through the Lakehouse SQL analytics endpoint.
@@ -63,8 +65,8 @@ selected from periods common to the required sources.
 
 ## Key value messages
 
-- **End-to-end architecture:** the demo connects Azure ingestion, ADLS, Fabric Lakehouse,
-  SQL analytics, and a Fabric App.
+- **Flexible ingestion:** the demo supports a lightweight one-time ADLS landing or direct
+  Fabric ingestion while preserving one Bronze contract.
 - **Governed public data:** public APIs become validated and reusable organizational data
   products rather than direct browser dependencies.
 - **Comparable state insights:** population normalization supports more meaningful comparisons
@@ -73,8 +75,8 @@ selected from periods common to the required sources.
   visible in the experience.
 - **Honest data quality:** suppressed or missing values remain null and incomplete coverage
   blocks a healthy status.
-- **Secure by default:** API keys are stored in Key Vault, services use managed identity, and the
-  application requires Microsoft Entra authentication.
+- **Secure by default:** API keys are stored in Key Vault, ingestion uses Entra identities, and
+  the application requires Microsoft Entra authentication.
 - **Reusable pattern:** the same architecture can support other public, partner, or internal
   datasets that need controlled ingestion and custom application experiences.
 
@@ -95,16 +97,15 @@ Use these statements consistently during the demonstration:
 
 ## Key architecture talking points
 
-### Azure ingestion layer
+### Ingestion choices
 
-- The Azure Function supports scheduled and function-key-protected manual ingestion.
-- EIA and Census API keys are secure deployment parameters stored in Azure Key Vault.
-- The Function uses managed identity to access Key Vault and Storage.
-- Each successful run writes Bronze-ready NDJSON, an immutable batch manifest, and a latest
-  manifest.
-- Application Insights and Log Analytics provide execution, dependency, and failure telemetry.
-- The default daily schedule discovers newly published monthly data; it does not imply that the
-  source changes daily.
+- **Option A:** a dependency-free local script calls both REST APIs and uploads Bronze-ready
+  NDJSON plus immutable/latest manifests to ADLS using the signed-in Azure CLI identity.
+- **Option B:** a Fabric notebook retrieves secrets through the workspace identity, calls both
+  APIs, and writes Bronze directly.
+- Both options select the same eight-period common window and produce the same Bronze schema.
+- Run only one Bronze option for a refresh.
+- Use a Fabric Data Pipeline with Option B when scheduling is required.
 
 ### Fabric data layer
 
@@ -148,13 +149,14 @@ clear explanation of missing values."
 
 ### 1:30-3:00 - Explain secure ingestion
 
-**Show:** The deployed Azure Function, Key Vault, Storage account, and Application Insights.
+**Show:** The two ingestion choices, Key Vault, and the optional ADLS landing account.
 
-**Say:** "The Function acquires EIA and Census data without placing API keys in code. Managed
-identity retrieves secrets and writes immutable batches and manifests to the raw landing zone."
+**Say:** "For a one-time demo, the local loader retrieves secrets with the signed-in Azure
+identity and writes an immutable ADLS batch. For an all-Fabric workflow, the Bronze notebook
+retrieves the same secrets through the workspace identity and calls the APIs directly."
 
-If appropriate, show a successful invocation and the latest manifest. Do not display API keys or
-a Function URL containing a key.
+If appropriate, show the local loader result and latest manifest, or the Fabric notebook output.
+Do not display API keys.
 
 ### 3:00-5:00 - Walk through the medallion architecture
 
@@ -242,8 +244,8 @@ layer."
 
 ## Optional 30-minute technical extension
 
-1. Review the Bicep resources, security settings, and managed-identity role assignments.
-2. Trigger ingestion and inspect the immutable and latest manifests.
+1. Review the Bicep resources, security settings, and post-deployment RBAC assignments.
+2. Compare the one-time ADLS loader with the Fabric-direct Bronze notebook.
 3. Open the Lakehouse shortcut and explain why the raw data remains in Azure Storage.
 4. Run the Bronze, Silver, and Gold notebooks in sequence.
 5. Query the five Gold tables through the SQL analytics endpoint.
@@ -277,7 +279,7 @@ layer."
 
 ### For security and platform teams
 
-- Emphasize Key Vault, managed identity, RBAC, disabled anonymous access, disabled Storage shared
+- Emphasize Key Vault, Entra identities, RBAC, disabled anonymous access, disabled Storage shared
   keys, protected assets, and password authentication being disabled.
 - Be clear that the learning template keeps authenticated public-network endpoints enabled for
   portability and that production network isolation must be evaluated separately.
@@ -293,16 +295,16 @@ demo concentrates on the analytical application pattern rather than write-back.
 
 ### Is the application calling EIA and Census directly?
 
-No. The recommended path uses an Azure Function to retrieve the source data and land it in Azure
-Storage. Fabric then transforms the data into curated Gold tables. The browser consumes the Gold
-contract through the Lakehouse SQL analytics connector.
+No. In Option A, a one-time local loader lands the source data in Azure Storage. In Option B, a
+Fabric notebook calls the APIs and writes Bronze directly. In both cases, the browser consumes
+only the curated Gold contract through the Lakehouse SQL analytics connector.
 
 ### Why use both Azure and Fabric?
 
-Azure provides a secure and observable public-API ingestion and landing layer. Fabric provides
-shortcuts, Lakehouse processing, Delta tables, SQL access, governance, and the hosted application
-experience. A Fabric-only Bronze notebook is also included for environments that cannot use the
-Azure path.
+Azure provides optional Key Vault and ADLS landing services. Fabric provides direct notebook
+ingestion, shortcuts, Lakehouse processing, Delta tables, SQL access, governance, and the hosted
+application experience. Teams choose the local ADLS path or the Fabric-direct path based on the
+demo and operational requirements.
 
 ### Why is the reporting window limited to eight months?
 
@@ -345,9 +347,9 @@ recovery, and organization-specific compliance controls.
 
 ### What does the deployment button create?
 
-It creates the Azure-side services and configuration: Key Vault, Storage, Function App,
-Application Insights, Log Analytics, and required managed-identity access. It does not publish
-the Function source or create Fabric items.
+It creates Key Vault, an ADLS Gen2 Storage account, the private `raw` container, and the two API
+secrets. It does not run ingestion, assign environment-specific user or workspace identities, or
+create Fabric items.
 
 ### Why does the app show a configuration-required page?
 
@@ -363,7 +365,7 @@ Fabric App—is broadly reusable.
 
 ## Demo preparation checklist
 
-- Confirm Azure ingestion completed successfully without exposing keys.
+- Confirm the selected ingestion option completed successfully without exposing keys.
 - Confirm the latest manifest identifies three datasets and eight selected periods.
 - Confirm every selected month contains 51 jurisdictions.
 - Confirm all five Gold tables exist and the freshness status is healthy.
@@ -372,6 +374,5 @@ Fabric App—is broadly reusable.
 - Spot-check at least one application value against the SQL analytics endpoint.
 - Confirm null values render as not reported rather than zero.
 - Confirm dark mode and the presentation display are readable.
-- Confirm no environment-specific identifiers, credentials, or Function keys are visible.
+- Confirm no environment-specific identifiers or credentials are visible.
 - Keep the README architecture and troubleshooting sections available for technical questions.
-

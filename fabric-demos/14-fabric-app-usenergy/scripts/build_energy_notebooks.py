@@ -437,10 +437,10 @@ AZURE_BRONZE = notebook(
             """
 # 01A — Bronze from the Azure landing zone
 
-Use this notebook after deploying the optional Azure ingestion layer and creating a Lakehouse
+Use this notebook after running the one-time local ingestion script and creating a Lakehouse
 shortcut named `us-energy-raw` that points to the deployed Storage account's `raw` container.
 
-The Azure Function writes a validated, Bronze-ready NDJSON batch and updates
+The local script writes a validated, Bronze-ready NDJSON batch and updates
 `energy/latest.json`. This notebook reads that manifest, validates the expected datasets and
 eight-month window, then appends the batch to `bronze.energy_source_raw`.
 
@@ -475,7 +475,7 @@ try:
 except Exception as exc:
     raise RuntimeError(
         f"Unable to read {manifest_path}. Verify the shortcut, Storage RBAC, and that the "
-        "Azure Function completed at least one ingestion."
+        "one-time local ingestion script completed successfully."
     ) from exc
 
 required_manifest_fields = {
