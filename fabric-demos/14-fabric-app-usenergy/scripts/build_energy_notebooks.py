@@ -30,7 +30,22 @@ def code(text: str, *, parameters: bool = False) -> dict:
     }
 
 
-def notebook(cells: list[dict]) -> dict:
+def notebook(cells: list[dict], *, code_markdowns=None) -> dict:
+    if code_markdowns is not None:
+        code_cells = sum(cell["cell_type"] == "code" for cell in cells)
+        if code_cells != len(code_markdowns):
+            raise ValueError(
+                f"Expected {code_cells} code-cell explanations; received {len(code_markdowns)}."
+            )
+        documented_cells = []
+        explanation_index = 0
+        for cell in cells:
+            if cell["cell_type"] == "code":
+                documented_cells.append(markdown(code_markdowns[explanation_index]))
+                explanation_index += 1
+            documented_cells.append(cell)
+        cells = documented_cells
+
     return {
         "cells": cells,
         "metadata": {
@@ -1160,6 +1175,187 @@ for table_name in outputs:
 """
         ),
     ]
+)
+
+
+BRONZE = notebook(
+    BRONZE["cells"],
+    code_markdowns=[
+        """
+## Step 1 — Configure ingestion parameters
+
+Sets the deployment environment, Key Vault and secret names, API endpoints, jurisdiction
+expectations, and EIA page size. Supply environment-specific values through a Fabric Variable
+Library or pipeline rather than embedding credentials in the notebook.
+""",
+        """
+## Step 2 — Initialize secure API access
+
+Imports the required libraries, validates the environment, retrieves the EIA and Census API keys
+from Azure Key Vault, and creates a retry-enabled HTTP session. It also assigns a unique batch ID,
+captures the UTC retrieval time, and ensures the Bronze schema exists.
+""",
+        """
+## Step 3 — Select the common EIA reporting window
+
+Defines reusable EIA request and pagination helpers, reads each route's metadata, and selects the
+latest eight monthly periods available from both operational and retail-sales datasets. Complete
+pagination is enforced by comparing the rows received with EIA's reported total.
+""",
+        """
+## Step 4 — Retrieve EIA and Census source data
+
+Downloads operational generation, retail sales, and Census Vintage 2021 population records.
+The cell verifies that every selected EIA period is present and that Census returns exactly the
+50 states plus the District of Columbia after Puerto Rico is excluded.
+""",
+        """
+## Step 5 — Build and persist the Bronze batch
+
+Defines the explicit raw schema, maps each source response into a shared record contract, and
+creates a Spark DataFrame without changing source values. It writes a batch manifest to Lakehouse
+Files and appends the partitioned records to `bronze.energy_source_raw`.
+""",
+        """
+## Step 6 — Validate the Bronze output
+
+Confirms that all three required datasets contain rows and that the persisted EIA periods exactly
+match the selected common window. The final summary prints the batch ID, per-source row counts,
+and selected periods for operational traceability.
+""",
+    ],
+)
+
+AZURE_BRONZE = notebook(
+    AZURE_BRONZE["cells"],
+    code_markdowns=[
+        """
+## Step 1 — Configure the Azure landing shortcut
+
+Sets the deployment environment and the Lakehouse shortcut that exposes the Storage account's
+`raw` container. Change only the shortcut name if your Fabric item uses a different value.
+""",
+        """
+## Step 2 — Load and validate the landed batch
+
+Reads `energy/latest.json`, verifies the manifest contract and eight-period window, loads the
+referenced NDJSON records, and checks the complete Bronze schema. Timestamp and date fields are
+converted to Spark types, and every record must match the manifest batch ID.
+""",
+        """
+## Step 3 — Validate and append to Bronze
+
+Checks the required source datasets, selected periods, and duplicate-batch protection before
+appending the landed records to `bronze.energy_source_raw`. The resulting summary identifies the
+batch, source counts, periods, and Storage path used by the load.
+""",
+    ],
+)
+
+SILVER = notebook(
+    SILVER["cells"],
+    code_markdowns=[
+        """
+## Step 1 — Configure Silver validation
+
+Sets the deployment environment and the expected jurisdiction count of 51, representing all
+50 states plus the District of Columbia.
+""",
+        """
+## Step 2 — Load the latest Bronze batch
+
+Imports Spark helpers, validates the environment, creates the Silver schema, and identifies the
+most recently ingested Bronze batch. All downstream transformations are restricted to that batch
+so separate ingestion runs cannot be mixed.
+""",
+        """
+## Step 3 — Define reference mappings and numeric parsing
+
+Creates the authoritative state/FIPS lookup, classifies EIA fuel codes, and defines helpers that
+distinguish reported numbers from suppressed or missing values. Suppression markers become null
+measures with an explicit status instead of being converted to zero.
+""",
+        """
+## Step 4 — Normalize operational, retail, and population data
+
+Builds the three typed Silver DataFrames, standardizes state and fuel identifiers, parses numeric
+measures, enriches state names, and selects the documented output columns. Census population is
+bound to Vintage 2021 metadata.
+""",
+        """
+## Step 5 — Enforce Silver data-quality rules
+
+Checks natural-key uniqueness, rejects negative reported measures where negatives are invalid,
+and verifies complete jurisdiction coverage. Net generation is intentionally excluded from the
+nonnegative rule because pumped-storage generation can legitimately be negative.
+""",
+        """
+## Step 6 — Publish optimized Silver tables
+
+Overwrites only the selected EIA period range, removes obsolete periods, writes the three Delta
+tables at their documented grains, and optimizes the state-based access paths. The printed counts
+provide a final reconciliation for the processed batch.
+""",
+    ],
+)
+
+GOLD = notebook(
+    GOLD["cells"],
+    code_markdowns=[
+        """
+## Step 1 — Configure Gold processing
+
+Sets the deployment environment and expected 51-jurisdiction coverage used by the Gold
+transformations and validation rules.
+""",
+        """
+## Step 2 — Load Silver sources and select periods
+
+Creates the Gold schema, enables Delta write optimizations, loads the three Silver tables, and
+defines null-safe ratio logic. Processing is restricted to the latest eight periods common to
+both operational and retail-sales data.
+""",
+        """
+## Step 3 — Build the fuel-level analytical table
+
+Validates EIA row-level units before calculating generation mix, fuel intensity, and
+population-normalized generation. The resulting `gold_energy` DataFrame preserves the
+period-state-fuel grain and labels source units explicitly.
+""",
+        """
+## Step 4 — Build state-month electricity metrics
+
+Aggregates fuel records to state-month totals, joins retail sales and population, and calculates
+carbon-free share, fossil dependency, per-person measures, month-over-month change, state rank,
+eight-month ranges, and completeness.
+""",
+        """
+## Step 5 — Build national and population outputs
+
+Rolls state-month values into national monthly summaries with coverage metrics and creates the
+state population serving table. Both outputs retain source and retrieval metadata needed by the
+application and SQL endpoint consumers.
+""",
+        """
+## Step 6 — Build data-freshness metadata
+
+Calculates the latest available period, retrieval timestamp, jurisdiction coverage, completeness,
+and status for each EIA and Census source. These rows power transparent freshness indicators in
+the State Energy Explorer.
+""",
+        """
+## Step 7 — Validate Gold table grains and ranges
+
+Enforces the documented natural keys, checks nonnegative and percentage ranges, and confirms that
+every state-month period contains all 51 jurisdictions before any serving table is published.
+""",
+        """
+## Step 8 — Publish Gold serving tables
+
+Writes all five Gold DataFrames as schema-overwriting Delta tables, partitions monthly outputs by
+period, applies table optimization, and prints final row counts for reconciliation.
+""",
+    ],
 )
 
 
