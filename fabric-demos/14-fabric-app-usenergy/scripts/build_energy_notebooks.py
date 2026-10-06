@@ -743,36 +743,52 @@ population = (
         code(
             """
 def assert_unique(df, keys, name):
+    # Check for duplicate natural keys; if found, show a sample and fail fast.
     duplicates = df.groupBy(*keys).count().where(F.col("count") > 1)
     if duplicates.limit(1).count():
         duplicates.show(20, truncate=False)
         raise RuntimeError(f"{name} contains duplicate keys: {keys}")
 
 def assert_nonnegative(df, columns, name):
+    \"\"\"Ensure all reported numeric values in the given columns are non-negative.\"\"\"
     condition = None
     for column in columns:
+        status_column = f"{column}_status"
         check = F.col(column).isNotNull() & (F.col(column) < 0)
-        condition = check if condition is None else condition | check
-    if df.where(condition).limit(1).count():
+        if status_column in df.columns:
+            check = check & (F.col(status_column) == F.lit("reported"))
+        condition = check if condition is None else (condition | check)
+    if condition is not None and df.where(condition).limit(1).count():
+        df.where(condition).show(20, truncate=False)
         raise RuntimeError(f"{name} contains negative reported values.")
 
+# Natural-key uniqueness checks.
 assert_unique(operational, ["period", "state_code", "fuel_code"], "operational")
 assert_unique(retail, ["period", "state_code"], "retail")
 assert_unique(population, ["state_code"], "population")
+
+# Net generation can legitimately be negative for sources such as pumped storage.
 assert_nonnegative(
     operational,
-    ["generation_mwh", "total_consumption", "consumption_for_eg", "total_consumption_btu", "consumption_for_eg_btu"],
+    [
+        "total_consumption",
+        "consumption_for_eg",
+        "total_consumption_btu",
+        "consumption_for_eg_btu",
+    ],
     "operational",
 )
 assert_nonnegative(retail, ["retail_sales_mwh"], "retail")
 assert_nonnegative(population, ["population"], "population")
 
+# Every EIA period must cover all 50 states plus the District of Columbia.
 for name, df in {"operational": operational, "retail": retail}.items():
     coverage = df.groupBy("period").agg(F.countDistinct("state_code").alias("jurisdictions"))
     bad = coverage.where(F.col("jurisdictions") != expected_jurisdictions)
     if bad.limit(1).count():
         bad.show(truncate=False)
         raise RuntimeError(f"{name} does not cover all 50 states plus DC for every period.")
+
 if population.select("state_code").distinct().count() != expected_jurisdictions:
     raise RuntimeError("Census population does not cover all 50 states plus DC.")
 """
