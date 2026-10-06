@@ -11,6 +11,7 @@ services:
       enabled: false
     allowedRedirectUris:
       - http://localhost:5173
+      - http://127.0.0.1:5173
   staticHosting:
     enabled: true
     path: packages/frontend
@@ -20,3 +21,19 @@ services:
     assetAccess: protected
     embedded:
       only: false
+  data:
+    enabled: false
+  storage:
+    enabled: false
+  functions:
+    enabled: false
+connectors:
+  - name: stateenergylakehouse
+    type: fabric-sqlanalytics
+    config:
+      workspaceId: <FABRIC_WORKSPACE_ID>
+      itemId: <LAKEHOUSE_ITEM_ID>
+    auth:
+      type: application
+    operations:
+      - name: read

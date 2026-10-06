@@ -230,7 +230,7 @@ function App() {
             {!loading && page !== 'methodology' && !snapshot && (
               <ConfigurationState setup={setup} />
             )}
-            {!loading && snapshot && (
+            {!loading && snapshot && page !== 'methodology' && (
               <ExplorerPageView
                 page={page}
                 snapshot={snapshot}

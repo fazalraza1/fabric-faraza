@@ -51,7 +51,13 @@ const localNetworkAccessPlugin: PluginOption = {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      tsDecorators: true,
+      useAtYourOwnRisk_mutateSwcOptions(options) {
+        options.jsc.transform ??= {};
+        options.jsc.transform.decoratorVersion = '2022-03';
+      },
+    }),
     tailwindcss(),
     rayfinLocalDev({ autoLogin: true, sourceActivity: true }),
     localNetworkAccessPlugin,

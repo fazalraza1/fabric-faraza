@@ -33,6 +33,7 @@ azure-function/.venv/
 rayfin/.env
 rayfin/.env.secrets
 rayfin/.deployments.json
+rayfin/connectors/*/metadata.json
 packages/functions/deploymentdata.json
 infra/*.local.parameters.json
 

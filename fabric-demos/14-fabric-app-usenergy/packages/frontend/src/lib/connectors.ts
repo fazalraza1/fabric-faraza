@@ -1,3 +1,4 @@
+// #region rayfin:app-owned — copied verbatim by the Rayfin CLI; edit freely.
 //-----------------------------------------------------------------------
 // <copyright company="Microsoft Corporation">
 //        Copyright (c) Microsoft Corporation.  All rights reserved.
@@ -9,10 +10,18 @@ import type {
   ConnectorConfig,
   ConnectorsRuntime,
 } from '@microsoft/rayfin-connectors';
+import {
+  connectorConfig as stateenergylakehouseConfig,
+  type StateenergylakehouseSchema,
+} from '../../../../rayfin/connectors/stateenergylakehouse/schema';
+// #endregion rayfin:app-owned
 
-/** Replaced with named connector types by `rayfin connector add`. */
-export type AppConnectorsSchema = Record<string, never>;
+export type AppConnectorsSchema = {
+  stateenergylakehouse: StateenergylakehouseSchema;
+};
 
-export const connectorConfigs: Record<string, ConnectorConfig> = {};
+export const connectorConfigs: Record<string, ConnectorConfig> = {
+  stateenergylakehouse: stateenergylakehouseConfig,
+};
 
 export const connectorRuntimes: ConnectorsRuntime = {};

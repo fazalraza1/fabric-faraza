@@ -468,35 +468,24 @@ npx rayfin connector search "<LAKEHOUSE_DISPLAY_NAME>" `
 Confirm exactly one result and verify its `workspaceName`, `displayName`, `workspaceId`,
 `itemId`, and `connectorType`.
 
-Use the exact IDs from the verified result:
+The repository includes the typed, read-only connector entities and the application adapter for
+the five Gold tables. Replace `<FABRIC_WORKSPACE_ID>` and `<LAKEHOUSE_ITEM_ID>` in
+`rayfin/rayfin.yml` with the exact IDs from the verified result.
 
 ```powershell
-npx rayfin connector add `
-  --type fabric-sqlanalytics `
-  --workspace-id <WORKSPACE_ID> `
-  --item-id <LAKEHOUSE_ITEM_ID> `
-  --name stateEnergyLakehouse
+npx rayfin connector inspect --name stateenergylakehouse
 ```
 
 Then:
 
-1. Install the exact version-pinned frontend packages printed by the command.
-2. Inspect the connector:
+1. Confirm the connector lists the five required Gold entities.
+2. Inspect one row from each entity and verify its schema matches the generated entity classes
+   under `rayfin/connectors/stateenergylakehouse/`.
+3. Repeat the application validation commands.
 
-   ```powershell
-   npx rayfin connector inspect --name stateEnergyLakehouse
-   ```
-
-3. Inspect one row from each required Gold entity before consuming its fields.
-4. Follow the installed connector package documentation to generate typed entities for only the
-   five Gold tables.
-5. Wire the generated schema into `packages/frontend/src/lib/connectors.ts`.
-6. Implement the `EnergyDataProvider` adapter using the verified generated entity fields.
-7. Update `packages/frontend/src/lib/energy-provider.registration.ts` with the alias and adapter.
-8. Repeat the application validation commands.
-
-Until this real connector is configured, the app displays an actionable setup-required state and
-does not invent business values.
+Generated connector discovery metadata is environment-specific and intentionally excluded from
+source control. Until the placeholder IDs are replaced with a real Lakehouse, connector operations
+fail explicitly and the app does not invent business values.
 
 ## Step 10: Run the protected app locally
 

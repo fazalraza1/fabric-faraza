@@ -401,7 +401,7 @@ def census_record(row):
         as_text(row.get("state")), None, None, None, None, None, None, None, None,
         None, as_text(row.get(census_population_variable)),
         None, None, None,
-        census_response.url, json.dumps({census_population_variable: "persons"}),
+        census_population_url, json.dumps({census_population_variable: "persons"}),
         json.dumps({"vintage": "2021", "variable": census_population_variable}),
         batch_id, retrieved_at, retrieved_at.date(),
     )
@@ -1077,7 +1077,7 @@ national = (
 gold_population = (
     population.select(
         "state_code", "state_name", "census_state_fips", "population", "estimate_year",
-        "vintage", F.col("source_url").alias("source"),
+        "vintage", F.lit("Census PEP Vintage 2021 population API").alias("source"),
         F.col("ingested_at_utc").alias("retrieved_at_utc"),
     )
 )
